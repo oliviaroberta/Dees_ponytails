@@ -51,17 +51,17 @@ const ProductDetailDialog = ({ product, open, onOpenChange }: Props) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl overflow-hidden p-0">
-        <div className="grid md:grid-cols-2">
-          <div className="aspect-square bg-secondary/40 md:aspect-auto">
+      <DialogContent className="max-h-[90svh] max-w-3xl overflow-hidden p-0">
+        <div className="grid max-h-[90svh] md:grid-cols-2">
+          <div className="aspect-square bg-secondary/40 md:aspect-auto md:h-full">
             <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
           </div>
 
-          <div className="flex flex-col p-6 md:p-8">
+          <div className="flex max-h-[90svh] flex-col overflow-y-auto p-6 md:p-8">
             <button
               type="button"
               onClick={() => onOpenChange(false)}
-              className="mb-5 inline-flex w-fit items-center gap-2 text-sm uppercase tracking-[0.2em] text-muted-foreground transition-colors hover:text-foreground"
+              className="mb-5 inline-flex w-fit items-center gap-2 pr-10 text-sm uppercase tracking-[0.2em] text-muted-foreground transition-colors hover:text-foreground"
             >
               <ArrowLeft size={16} />
               Back
@@ -116,7 +116,7 @@ const ProductDetailDialog = ({ product, open, onOpenChange }: Props) => {
               </span>
             </div>
 
-            <div className="mt-auto flex flex-col gap-2 sm:flex-row">
+            <div className="sticky bottom-0 mt-6 flex flex-col gap-2 bg-background pt-4 sm:flex-row">
               <button
                 onClick={handleAdd}
                 className="flex flex-1 items-center justify-center gap-2 rounded border border-foreground px-5 py-3 font-body text-sm tracking-wide text-foreground transition-colors hover:bg-foreground hover:text-background"
