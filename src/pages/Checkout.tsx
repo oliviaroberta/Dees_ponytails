@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useCart } from "@/context/CartContext";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import PageBackButton from "@/components/PageBackButton";
 import backgroundImage from "@/assets/background.jpg";
 import { CreditCard, Smartphone, CheckCircle2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
@@ -81,6 +82,9 @@ const Checkout = () => {
       <main className="flex-1">
         <div className="container mx-auto px-4 pb-16 pt-28 lg:px-8">
           <div className="mx-auto max-w-5xl">
+            <div className="mb-6">
+              <PageBackButton fallbackTo="/shop" />
+            </div>
             <h1 className="mb-2 font-display text-4xl font-light text-foreground">
               Check<span className="font-semibold italic">out</span>
             </h1>

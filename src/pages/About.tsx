@@ -3,6 +3,7 @@ import CartDrawer from "@/components/CartDrawer";
 import AboutSection from "@/components/AboutSection";
 import ReviewsSection from "@/components/ReviewsSection";
 import Footer from "@/components/Footer";
+import PageBackButton from "@/components/PageBackButton";
 import backgroundImage from "@/assets/background.jpg";
 
 const About = () => {
@@ -21,6 +22,9 @@ const About = () => {
         <Navbar />
         <CartDrawer />
         <div className="pt-16">
+          <div className="container mx-auto px-4 pt-6 lg:px-8">
+            <PageBackButton fallbackTo="/" />
+          </div>
           <AboutSection />
           <ReviewsSection />
         </div>
