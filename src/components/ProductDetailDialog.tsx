@@ -1,5 +1,5 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { ShoppingBag, CreditCard, Check, ArrowLeft } from "lucide-react";
+import { ShoppingBag, CreditCard, Check } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import type { CatalogProduct } from "@/types/product";
 import { useNavigate } from "react-router-dom";
@@ -58,15 +58,6 @@ const ProductDetailDialog = ({ product, open, onOpenChange }: Props) => {
           </div>
 
           <div className="flex max-h-[90svh] flex-col overflow-y-auto p-6 md:p-8">
-            <button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              className="mb-5 inline-flex w-fit items-center gap-2 pr-10 text-sm uppercase tracking-[0.2em] text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <ArrowLeft size={16} />
-              Back
-            </button>
-
             <p className="mb-2 font-body text-xs uppercase tracking-[0.25em] text-muted-foreground">
               {product.textureStyle}
             </p>
@@ -116,7 +107,7 @@ const ProductDetailDialog = ({ product, open, onOpenChange }: Props) => {
               </span>
             </div>
 
-            <div className="sticky bottom-0 mt-6 flex flex-col gap-2 bg-background pt-4 sm:flex-row">
+            <div className="mt-6 flex flex-col gap-2 pt-2 sm:flex-row">
               <button
                 onClick={handleAdd}
                 className="flex flex-1 items-center justify-center gap-2 rounded border border-foreground px-5 py-3 font-body text-sm tracking-wide text-foreground transition-colors hover:bg-foreground hover:text-background"
