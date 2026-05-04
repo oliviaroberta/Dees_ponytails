@@ -1,7 +1,7 @@
-import productStraight from "@/assets/Neutral Simple Coming Soon Instagram Post 2.PNG";
-import productBodywave from "@/assets/Neutral Simple Coming Soon Instagram Post 5.PNG";
-import productCurly from "@/assets/Neutral Simple Coming Soon Instagram Post 3.PNG";
-import productKinky from "@/assets/Neutral Simple Coming Soon Instagram Post.PNG";
+import productStraight from "@/assets/product-straight-new.png";
+import productBodywave from "@/assets/product-body-wave.png";
+import productCurly from "@/assets/product-deep-curl.png";
+import productKinky from "@/assets/product-natural-texture.png";
 
 export const getProductImage = (name: string, image?: string) => {
   if (image?.trim()) {
