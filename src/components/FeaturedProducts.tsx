@@ -15,7 +15,7 @@ const FeaturedCard = ({ product, index }: { product: CatalogProduct; index: numb
       className="group"
     >
       <Link
-        to={`/shop?product=${product.id}`}
+        to={`/shop/${product.id}`}
         className="block rounded-2xl border border-border/60 bg-card/80 p-3.5 backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-foreground/20 hover:shadow-[0_18px_45px_rgba(27,17,8,0.12)]"
       >
         <div className="relative mb-4 cursor-pointer overflow-hidden rounded-xl bg-secondary/50">

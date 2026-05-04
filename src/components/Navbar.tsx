@@ -4,6 +4,7 @@ import { useCart } from "@/context/CartContext";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import SearchDialog from "./SearchDialog";
+import logo from "@/assets/logo.png";
 
 const navLinks = [
   { label: "Home", href: "/" },
@@ -46,9 +47,13 @@ const Navbar = () => {
       transition={{ duration: 0.3, ease: "easeInOut" }}
       className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border/50"
     >
-      <div className="container mx-auto flex items-center justify-between h-16 px-4 lg:px-8">
-        <Link to="/" className="font-display text-2xl font-semibold tracking-wide text-foreground">
-          Dees_ponytails
+      <div className="container mx-auto flex items-center justify-between h-20 px-4 lg:h-24 lg:px-8">
+        <Link to="/" className="flex items-center lg:-ml-4">
+          <img
+            src={logo}
+            alt="Dees_ponytails"
+            className="h-400 w-auto object-contain sm:h-0 lg:h-28 xl:h-32"
+          />
         </Link>
 
         {/* Desktop nav */}
