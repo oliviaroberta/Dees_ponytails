@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
-import hero1 from "@/assets/hero-1.jpg";
-import hero2 from "@/assets/hero-2.jpg";
-import hero3 from "@/assets/hero-3.jpg";
+import hero1 from "@/assets/Neutral Simple Coming Soon Instagram Post 9.PNG";
+import hero2 from "@/assets/Neutral Simple Coming Soon Instagram Post.PNG";
+import hero3 from "@/assets/Neutral Simple Coming Soon Instagram Post 2.PNG";
 
 const slides = [hero1, hero2, hero3];
 

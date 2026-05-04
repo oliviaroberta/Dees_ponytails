@@ -1,9 +1,11 @@
 import React, { createContext, useContext, useState, useCallback } from "react";
 
 export interface CartItem {
+  lineId: string;
   id: string;
   name: string;
   texture: string;
+  color: string;
   length: string;
   price: number;
   quantity: number;
@@ -14,9 +16,9 @@ interface CartContextType {
   items: CartItem[];
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
-  addItem: (item: Omit<CartItem, "quantity">) => void;
-  removeItem: (id: string) => void;
-  updateQuantity: (id: string, quantity: number) => void;
+  addItem: (item: Omit<CartItem, "quantity" | "lineId">) => void;
+  removeItem: (lineId: string) => void;
+  updateQuantity: (lineId: string, quantity: number) => void;
   total: number;
   itemCount: number;
   clearCart: () => void;
@@ -28,26 +30,27 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [items, setItems] = useState<CartItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
 
-  const addItem = useCallback((newItem: Omit<CartItem, "quantity">) => {
+  const addItem = useCallback((newItem: Omit<CartItem, "quantity" | "lineId">) => {
     setItems((prev) => {
-      const existing = prev.find((i) => i.id === newItem.id);
+      const lineId = `${newItem.id}::${newItem.color}::${newItem.length}`;
+      const existing = prev.find((i) => i.lineId === lineId);
       if (existing) {
-        return prev.map((i) => i.id === newItem.id ? { ...i, quantity: i.quantity + 1 } : i);
+        return prev.map((i) => i.lineId === lineId ? { ...i, quantity: i.quantity + 1 } : i);
       }
-      return [...prev, { ...newItem, quantity: 1 }];
+      return [...prev, { ...newItem, lineId, quantity: 1 }];
     });
     setIsOpen(true);
   }, []);
 
-  const removeItem = useCallback((id: string) => {
-    setItems((prev) => prev.filter((i) => i.id !== id));
+  const removeItem = useCallback((lineId: string) => {
+    setItems((prev) => prev.filter((i) => i.lineId !== lineId));
   }, []);
 
-  const updateQuantity = useCallback((id: string, quantity: number) => {
+  const updateQuantity = useCallback((lineId: string, quantity: number) => {
     if (quantity <= 0) {
-      setItems((prev) => prev.filter((i) => i.id !== id));
+      setItems((prev) => prev.filter((i) => i.lineId !== lineId));
     } else {
-      setItems((prev) => prev.map((i) => i.id === id ? { ...i, quantity } : i));
+      setItems((prev) => prev.map((i) => i.lineId === lineId ? { ...i, quantity } : i));
     }
   }, []);
 

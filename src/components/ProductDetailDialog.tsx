@@ -1,5 +1,6 @@
+import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { ShoppingBag, CreditCard, Check } from "lucide-react";
+import { ShoppingBag, CreditCard } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import type { CatalogProduct } from "@/types/product";
 import { useNavigate } from "react-router-dom";
@@ -10,16 +11,35 @@ interface Props {
   onOpenChange: (open: boolean) => void;
 }
 
-const features = [
-  "Premium ponytail quality",
-  "Heat-friendly and reusable",
-  "Secure drawstring attachment",
-  "Easy everyday styling",
-];
+const parseOptions = (value?: string) =>
+  (value ?? "")
+    .split(/[,/|]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
 
 const ProductDetailDialog = ({ product, open, onOpenChange }: Props) => {
   const { addItem, setIsOpen } = useCart();
   const navigate = useNavigate();
+
+  const lengthOptions = useMemo(() => {
+    if (!product) return [];
+    const parsed = parseOptions(product.length);
+    return parsed.length > 0 ? parsed : ["Standard"];
+  }, [product]);
+
+  const colorOptions = useMemo(() => {
+    if (!product) return [];
+    const parsed = parseOptions(product.color);
+    return parsed.length > 0 ? parsed : ["Natural Black"];
+  }, [product]);
+
+  const [selectedLength, setSelectedLength] = useState("");
+  const [selectedColor, setSelectedColor] = useState("");
+
+  useEffect(() => {
+    setSelectedLength(lengthOptions[0] ?? "");
+    setSelectedColor(colorOptions[0] ?? "");
+  }, [lengthOptions, colorOptions, product?.id]);
 
   if (!product) return null;
 
@@ -28,7 +48,8 @@ const ProductDetailDialog = ({ product, open, onOpenChange }: Props) => {
       id: product.id,
       name: product.name,
       texture: product.textureStyle,
-      length: product.length,
+      color: selectedColor,
+      length: selectedLength,
       price: product.price,
       image: product.image,
     });
@@ -40,7 +61,8 @@ const ProductDetailDialog = ({ product, open, onOpenChange }: Props) => {
       id: product.id,
       name: product.name,
       texture: product.textureStyle,
-      length: product.length,
+      color: selectedColor,
+      length: selectedLength,
       price: product.price,
       image: product.image,
     });
@@ -51,53 +73,23 @@ const ProductDetailDialog = ({ product, open, onOpenChange }: Props) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90svh] max-w-3xl overflow-hidden p-0">
-        <div className="grid max-h-[90svh] md:grid-cols-2">
-          <div className="aspect-square bg-secondary/40 md:aspect-auto md:h-full">
+      <DialogContent className="max-h-[92svh] max-w-4xl overflow-hidden p-0">
+        <div className="grid max-h-[92svh] md:grid-cols-[0.88fr_1.12fr]">
+          <div className="aspect-[4/4.6] bg-secondary/40 md:h-full md:aspect-auto">
             <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
           </div>
 
-          <div className="flex max-h-[90svh] flex-col overflow-y-auto p-6 md:p-8">
-            <p className="mb-2 font-body text-xs uppercase tracking-[0.25em] text-muted-foreground">
-              {product.textureStyle}
-            </p>
-            <h2 className="mb-3 font-display text-2xl font-semibold text-foreground md:text-3xl">
+          <div className="flex max-h-[92svh] flex-col overflow-y-auto p-6 md:p-8 lg:p-10">
+            <h2 className="mb-6 font-display text-2xl font-semibold text-foreground md:text-3xl">
               {product.name}
             </h2>
-            <p className="mb-5 font-body text-sm leading-relaxed text-muted-foreground">
-              {product.description}
-            </p>
-
-            <ul className="mb-6 space-y-2">
-              {features.map((feature) => (
-                <li
-                  key={feature}
-                  className="flex items-start gap-2 font-body text-sm text-foreground/80"
-                >
-                  <Check size={15} className="mt-0.5 shrink-0 text-accent" />
-                  <span>{feature}</span>
-                </li>
-              ))}
-            </ul>
 
             <div className="mb-5 flex flex-wrap gap-2">
               <span className="rounded border border-border px-3 py-1.5 font-body text-xs text-muted-foreground">
-                {product.length}
-              </span>
-              <span className="rounded border border-border px-3 py-1.5 font-body text-xs text-muted-foreground">
-                {product.color}
-              </span>
-              <span className="rounded border border-border px-3 py-1.5 font-body text-xs text-muted-foreground">
-                {product.category}
-              </span>
-            </div>
-
-            <div className="mb-5 flex items-center justify-between">
-              <span className="font-display text-3xl font-semibold text-foreground">
-                GHS {product.price}
+                {product.textureStyle}
               </span>
               <span
-                className={`rounded-full px-3 py-1 font-body text-xs uppercase tracking-[0.18em] ${
+                className={`rounded-full px-3 py-1.5 font-body text-xs uppercase tracking-[0.18em] ${
                   product.status === "inStock"
                     ? "bg-primary text-primary-foreground"
                     : "bg-secondary text-foreground"
@@ -105,6 +97,41 @@ const ProductDetailDialog = ({ product, open, onOpenChange }: Props) => {
               >
                 {product.status === "inStock" ? "In Stock" : "Out of Stock"}
               </span>
+            </div>
+
+            <div className="mb-6 space-y-5">
+              <OptionGroup
+                label="Length"
+                options={lengthOptions}
+                selected={selectedLength}
+                onSelect={setSelectedLength}
+              />
+              <OptionGroup
+                label="Colour"
+                options={colorOptions}
+                selected={selectedColor}
+                onSelect={setSelectedColor}
+              />
+            </div>
+
+            <div className="mb-6 flex items-center justify-between gap-4">
+              <div>
+                <p className="mb-1 font-body text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+                  Price
+                </p>
+                <p className="font-display text-3xl font-semibold text-foreground">
+                  GHS {product.price}
+                </p>
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <p className="mb-2 font-body text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+                Description
+              </p>
+              <p className="font-body text-sm leading-relaxed text-foreground/85">
+                {product.description}
+              </p>
             </div>
 
             <div className="mt-6 flex flex-col gap-2 pt-2 sm:flex-row">
@@ -127,5 +154,39 @@ const ProductDetailDialog = ({ product, open, onOpenChange }: Props) => {
     </Dialog>
   );
 };
+
+const OptionGroup = ({
+  label,
+  options,
+  selected,
+  onSelect,
+}: {
+  label: string;
+  options: string[];
+  selected: string;
+  onSelect: (value: string) => void;
+}) => (
+  <div>
+    <p className="mb-2 font-body text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+      {label}
+    </p>
+    <div className="flex flex-wrap gap-2">
+      {options.map((option) => (
+        <button
+          key={option}
+          type="button"
+          onClick={() => onSelect(option)}
+          className={`rounded border px-3 py-1.5 font-body text-xs transition-colors ${
+            selected === option
+              ? "border-foreground bg-foreground text-background"
+              : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
+          }`}
+        >
+          {option}
+        </button>
+      ))}
+    </div>
+  </div>
+);
 
 export default ProductDetailDialog;

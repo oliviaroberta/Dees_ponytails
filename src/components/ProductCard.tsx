@@ -19,6 +19,7 @@ const ProductCard = ({ product }: Props) => {
       id: product.id,
       name: product.name,
       texture: product.textureStyle,
+      color: product.color,
       length: product.length,
       price: product.price,
       image: product.image,

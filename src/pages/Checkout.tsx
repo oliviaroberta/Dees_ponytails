@@ -57,7 +57,9 @@ const Checkout = () => {
         <main className="flex flex-1 items-center">
           <div className="container mx-auto max-w-xl px-4 pb-20 pt-32 text-center lg:px-8">
             <CheckCircle2 size={64} className="mx-auto mb-6 text-accent" />
-            <h1 className="mb-3 font-display text-4xl font-semibold text-foreground">Order Confirmed</h1>
+            <h1 className="mb-3 font-display text-4xl font-semibold text-foreground">
+              Order Confirmed
+            </h1>
             <p className="mb-2 font-body text-muted-foreground">
               Thank you, {form.name.split(" ")[0] || "love"}!
             </p>
@@ -93,7 +95,9 @@ const Checkout = () => {
             <form onSubmit={handleSubmit} className="grid gap-10 lg:grid-cols-[1fr_380px]">
               <div className="space-y-8">
                 <section className="rounded-lg border border-border/60 bg-card/80 p-6 backdrop-blur">
-                  <h2 className="mb-4 font-display text-lg font-semibold text-foreground">Contact & Delivery</h2>
+                  <h2 className="mb-4 font-display text-lg font-semibold text-foreground">
+                    Contact & Delivery
+                  </h2>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <Field label="Full Name" required value={form.name} onChange={(v) => update("name", v)} />
                     <Field label="Phone" required value={form.phone} onChange={(v) => update("phone", v)} placeholder="0245 ..." />
@@ -160,22 +164,24 @@ const Checkout = () => {
               </div>
 
               <aside className="h-fit rounded-lg border border-border/60 bg-card/90 p-6 backdrop-blur lg:sticky lg:top-24">
-                <h2 className="mb-4 font-display text-lg font-semibold text-foreground">Order Summary</h2>
+                <h2 className="mb-4 font-display text-lg font-semibold text-foreground">
+                  Order Summary
+                </h2>
 
                 {items.length === 0 ? (
                   <p className="py-4 font-body text-sm text-muted-foreground">Your cart is empty.</p>
                 ) : (
                   <div className="mb-4 max-h-64 space-y-3 overflow-y-auto">
                     {items.map((item) => (
-                      <div key={item.id} className="flex gap-3 font-body text-sm">
+                      <div key={item.lineId} className="flex gap-3 font-body text-sm">
                         <img src={item.image} alt={item.name} className="h-12 w-12 rounded object-cover" />
                         <div className="min-w-0 flex-1">
                           <p className="truncate font-medium text-foreground">{item.name}</p>
                           <p className="text-xs text-muted-foreground">
-                            {item.length} · x{item.quantity}
+                            {item.color} - {item.length} - x{item.quantity}
                           </p>
                         </div>
-                        <span className="text-foreground">GH₵{item.price * item.quantity}</span>
+                        <span className="text-foreground">GHS {item.price * item.quantity}</span>
                       </div>
                     ))}
                   </div>
@@ -184,7 +190,7 @@ const Checkout = () => {
                 <div className="space-y-2 border-t border-border pt-4 font-body text-sm">
                   <div className="flex justify-between text-muted-foreground">
                     <span>Subtotal</span>
-                    <span>GH₵{total}</span>
+                    <span>GHS {total}</span>
                   </div>
                   <div className="flex justify-between text-muted-foreground">
                     <span>Delivery</span>
@@ -192,7 +198,7 @@ const Checkout = () => {
                   </div>
                   <div className="flex justify-between border-t border-border pt-2 text-base font-semibold text-foreground">
                     <span>Total</span>
-                    <span>GH₵{total}</span>
+                    <span>GHS {total}</span>
                   </div>
                 </div>
 
@@ -201,10 +207,10 @@ const Checkout = () => {
                   disabled={submitting || items.length === 0}
                   className="mt-5 w-full rounded bg-accent py-3 font-body text-sm uppercase tracking-wider text-accent-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
                 >
-                  {submitting ? "Processing..." : `Pay GH₵${total}`}
+                  {submitting ? "Processing..." : `Pay GHS ${total}`}
                 </button>
                 <p className="mt-3 text-center font-body text-xs text-muted-foreground">
-                  Secure checkout · Your details are encrypted
+                  Secure checkout - Your details are encrypted
                 </p>
               </aside>
             </form>

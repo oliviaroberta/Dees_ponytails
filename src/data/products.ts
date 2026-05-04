@@ -1,7 +1,7 @@
-import productStraight from "@/assets/product-straight.jpg";
-import productBodywave from "@/assets/product-bodywave.jpg";
-import productCurly from "@/assets/product-curly.jpg";
-import productKinky from "@/assets/product-kinky.jpg";
+import productStraight from "@/assets/Neutral Simple Coming Soon Instagram Post 2.PNG";
+import productBodywave from "@/assets/Neutral Simple Coming Soon Instagram Post 5.PNG";
+import productCurly from "@/assets/Neutral Simple Coming Soon Instagram Post 3.PNG";
+import productKinky from "@/assets/Neutral Simple Coming Soon Instagram Post.PNG";
 import type { CatalogProductInput } from "@/types/product";
 
 export const seedProducts: CatalogProductInput[] = [
