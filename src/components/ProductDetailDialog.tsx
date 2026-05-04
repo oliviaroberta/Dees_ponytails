@@ -4,6 +4,7 @@ import { ShoppingBag, CreditCard } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import type { CatalogProduct } from "@/types/product";
 import { useNavigate } from "react-router-dom";
+import { getProductImage } from "@/lib/productImages";
 
 interface Props {
   product: CatalogProduct | null;
@@ -76,7 +77,11 @@ const ProductDetailDialog = ({ product, open, onOpenChange }: Props) => {
       <DialogContent className="max-h-[92svh] max-w-4xl overflow-hidden p-0">
         <div className="grid max-h-[92svh] md:grid-cols-[0.88fr_1.12fr]">
           <div className="aspect-[4/4.6] bg-secondary/40 md:h-full md:aspect-auto">
-            <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
+            <img
+              src={getProductImage(product.name, product.image)}
+              alt={product.name}
+              className="h-full w-full object-cover"
+            />
           </div>
 
           <div className="flex max-h-[92svh] flex-col overflow-y-auto p-6 md:p-8 lg:p-10">

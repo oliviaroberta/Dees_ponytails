@@ -3,9 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import hero1 from "@/assets/Neutral Simple Coming Soon Instagram Post 9.PNG";
 import hero2 from "@/assets/Neutral Simple Coming Soon Instagram Post.PNG";
-import hero3 from "@/assets/Neutral Simple Coming Soon Instagram Post 2.PNG";
 
-const slides = [hero1, hero2, hero3];
+const slides = [hero1, hero2];
 
 const HeroSection = () => {
   const [index, setIndex] = useState(0);
@@ -32,7 +31,7 @@ const HeroSection = () => {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 1.01 }}
               transition={{ duration: 1.1, ease: "easeInOut" }}
-              className="absolute inset-0 h-full w-full object-cover"
+              className="absolute inset-0 h-full w-full object-contain object-center"
             />
           </AnimatePresence>
 

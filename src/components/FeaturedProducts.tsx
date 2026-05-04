@@ -2,25 +2,8 @@ import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAdminProducts } from "@/context/AdminProductsContext";
-import productStraight from "@/assets/Neutral Simple Coming Soon Instagram Post 2.PNG";
-import productBodywave from "@/assets/Neutral Simple Coming Soon Instagram Post 5.PNG";
-import productCurly from "@/assets/Neutral Simple Coming Soon Instagram Post 3.PNG";
-import productKinky from "@/assets/Neutral Simple Coming Soon Instagram Post.PNG";
 import type { CatalogProduct } from "@/types/product";
-
-const getFeaturedImage = (name: string, image?: string) => {
-  if (image?.trim()) {
-    return image;
-  }
-
-  const key = name.toLowerCase();
-
-  if (key.includes("straight")) return productStraight;
-  if (key.includes("wave")) return productBodywave;
-  if (key.includes("curl")) return productCurly;
-
-  return productKinky;
-};
+import { getProductImage } from "@/lib/productImages";
 
 const FeaturedCard = ({ product, index }: { product: CatalogProduct; index: number }) => {
   return (
@@ -37,10 +20,10 @@ const FeaturedCard = ({ product, index }: { product: CatalogProduct; index: numb
       >
         <div className="relative mb-4 cursor-pointer overflow-hidden rounded-xl bg-secondary/50">
           <img
-            src={getFeaturedImage(product.name, product.image)}
+            src={getProductImage(product.name, product.image)}
             alt={product.name}
             loading="lazy"
-            className="aspect-[4/5] w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="aspect-[4/5] w-full object-contain bg-background/70 p-1.5 transition-transform duration-500 group-hover:scale-105"
           />
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-foreground/75 via-foreground/30 to-transparent px-4 pb-4 pt-10 text-background">
             <span className="rounded-full border border-background/30 bg-background/10 px-3 py-1 font-body text-[11px] uppercase tracking-[0.22em] backdrop-blur-sm">

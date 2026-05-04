@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useCart } from "@/context/CartContext";
 import type { CatalogProduct } from "@/types/product";
 import ProductDetailDialog from "./ProductDetailDialog";
+import { getProductImage } from "@/lib/productImages";
 
 interface Props {
   product: CatalogProduct;
@@ -22,7 +23,7 @@ const ProductCard = ({ product }: Props) => {
       color: product.color,
       length: product.length,
       price: product.price,
-      image: product.image,
+      image: getProductImage(product.name, product.image),
     });
   };
 
@@ -42,7 +43,7 @@ const ProductCard = ({ product }: Props) => {
           aria-label={`View ${product.name} details`}
         >
           <img
-            src={product.image}
+            src={getProductImage(product.name, product.image)}
             alt={product.name}
             loading="lazy"
             width={800}
