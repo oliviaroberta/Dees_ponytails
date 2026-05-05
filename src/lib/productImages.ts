@@ -1,7 +1,7 @@
-import productStraight from "@/assets/product-straight-new.png";
-import productBodywave from "@/assets/product-body-wave.png";
-import productCurly from "@/assets/product-deep-curl.png";
-import productKinky from "@/assets/product-natural-texture.png";
+import productStraight from "@/assets/product-straight-new-optimized.jpg";
+import productBodywave from "@/assets/product-body-wave-optimized.jpg";
+import productCurly from "@/assets/product-deep-curl-optimized.jpg";
+import productKinky from "@/assets/product-natural-texture-optimized.jpg";
 
 export const getProductImage = (name: string, image?: string) => {
   if (image?.trim()) {

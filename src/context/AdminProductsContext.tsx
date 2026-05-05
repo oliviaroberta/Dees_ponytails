@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { seedProducts } from "@/data/products";
+import { getProductImage } from "@/lib/productImages";
 import type { CatalogProduct, CatalogProductInput, ProductStatus } from "@/types/product";
 
 export type AdminProduct = CatalogProduct;
@@ -20,16 +21,33 @@ const defaultProducts: CatalogProduct[] = seedProducts.map((product, index) => (
   ...product,
 }));
 
+const resolveStoredImage = (name: string, image: string | null | undefined, fallbackImage: string) => {
+  const trimmed = image?.trim() ?? "";
+
+  if (!trimmed) {
+    return getProductImage(name, fallbackImage);
+  }
+
+  // Built Vite asset URLs are hashed and can change on every deploy.
+  // If one of those was persisted in localStorage, recover to the current bundled image.
+  if (trimmed.includes("/assets/")) {
+    return getProductImage(name, fallbackImage);
+  }
+
+  return trimmed;
+};
+
 const normalizeProduct = (
   product: Partial<CatalogProduct> | null | undefined,
   index: number,
 ): CatalogProduct => {
   const fallback = defaultProducts[index % defaultProducts.length];
+  const name = product?.name || fallback.name;
 
   return {
     id: product?.id || fallback.id,
-    name: product?.name || fallback.name,
-    image: product?.image || fallback.image,
+    name,
+    image: resolveStoredImage(name, product?.image, fallback.image),
     category: product?.category || fallback.category,
     textureStyle: product?.textureStyle || fallback.textureStyle,
     length: product?.length || fallback.length,

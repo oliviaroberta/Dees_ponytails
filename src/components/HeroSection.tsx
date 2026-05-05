@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
-import hero1 from "@/assets/hero-group.png";
-import hero2 from "@/assets/product-natural-texture.png";
+import hero1 from "@/assets/hero-group-optimized.jpg";
+import hero2 from "@/assets/product-natural-texture-optimized.jpg";
 import { useSiteContent } from "@/context/SiteContentContext";
 
 const slides = [hero1, hero2];
@@ -31,6 +31,7 @@ const HeroSection = () => {
               alt="Premium ponytail extension showcase"
               width={1600}
               height={1000}
+              loading={index === 0 ? "eager" : "lazy"}
               initial={{ opacity: 0, scale: 1.04 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 1.01 }}
