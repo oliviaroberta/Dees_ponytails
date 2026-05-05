@@ -1,7 +1,10 @@
 import { Link } from "react-router-dom";
 import CurrencySelect from "@/components/CurrencySelect";
+import { useSales } from "@/context/SalesContext";
 
 const Footer = () => {
+  const { isLive } = useSales();
+
   return (
     <footer className="section-solid border-t border-border py-8">
       <div className="container mx-auto px-4 lg:px-8">
@@ -30,6 +33,14 @@ const Footer = () => {
               >
                 Shop
               </Link>
+              {isLive ? (
+                <Link
+                  to="/sales"
+                  className="font-body text-sm text-foreground/80 transition-colors hover:text-foreground"
+                >
+                  Sales
+                </Link>
+              ) : null}
               <Link
                 to="/about"
                 className="font-body text-sm text-foreground/80 transition-colors hover:text-foreground"
