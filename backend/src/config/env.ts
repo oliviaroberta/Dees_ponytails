@@ -11,6 +11,8 @@ const envSchema = z.object({
   JWT_REFRESH_SECRET: z.string().min(16),
   ADMIN_EMAIL: z.string().email(),
   ADMIN_PASSWORD: z.string().min(8),
+  FRONTEND_URL: z.string().url().default("http://localhost:8080"),
+  PAYSTACK_SECRET_KEY: z.string().min(10).optional(),
 });
 
 export const env = envSchema.parse(process.env);

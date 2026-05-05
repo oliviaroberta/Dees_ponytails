@@ -7,6 +7,7 @@ import { AppError } from "../../utils/app-error.js";
 import { serializeOrder } from "../../utils/serializers.js";
 import { orderBodySchema, orderQuerySchema, orderStatusSchema } from "./orders.schemas.js";
 import { sequelize } from "../../lib/sequelize.js";
+import { calculateSubtotalAmount, prepareCheckoutItems } from "../../utils/pricing.js";
 
 const ordersRouter = Router();
 
@@ -68,38 +69,8 @@ ordersRouter.post(
   "/",
   asyncHandler(async (req, res) => {
     const payload = orderBodySchema.parse(req.body);
-    const products = await Product.findAll({
-      where: {
-        id: payload.items.map((item) => item.productId),
-      },
-    });
-
-    if (products.length !== payload.items.length) {
-      throw new AppError("One or more products were not found", 400);
-    }
-
-    const productsById = new Map(products.map((product) => [product.id, product]));
-    const sanitizedItems = payload.items.map((item) => {
-      const product = productsById.get(item.productId);
-
-      if (!product) {
-        throw new AppError("Product not found", 404);
-      }
-
-      if (product.status !== "IN_STOCK" || product.stock < item.quantity) {
-        throw new AppError(`Insufficient stock for ${product.name}`, 400);
-      }
-
-      return {
-        ...item,
-        product,
-      };
-    });
-
-    const subtotalAmount = sanitizedItems.reduce(
-      (sum, item) => sum + Number(item.product.price) * item.quantity,
-      0,
-    );
+    const sanitizedItems = await prepareCheckoutItems(payload.items);
+    const subtotalAmount = calculateSubtotalAmount(sanitizedItems);
 
     const result = await sequelize.transaction(async (transaction) => {
       const order = await Order.create(
@@ -126,7 +97,7 @@ ordersRouter.post(
           productId: item.productId,
           productName: item.product.name,
           quantity: item.quantity,
-          unitPrice: Number(item.product.price),
+          unitPrice: item.unitPrice,
           color: item.color,
           length: item.length,
         })),

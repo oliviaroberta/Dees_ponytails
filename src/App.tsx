@@ -17,6 +17,7 @@ import ProductDetails from "./pages/ProductDetails";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Checkout from "./pages/Checkout";
+import CheckoutCallback from "./pages/CheckoutCallback";
 import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProducts from "./pages/admin/AdminProducts";
@@ -62,6 +63,7 @@ const App = () => (
                       <Route path="/about" element={<About />} />
                       <Route path="/contact" element={<Contact />} />
                       <Route path="/checkout" element={<Checkout />} />
+                      <Route path="/checkout/callback" element={<CheckoutCallback />} />
                       <Route path="/admin/login" element={<AdminLogin />} />
                       <Route path="/admin" element={<ProtectedAdminRoute><AdminDashboard /></ProtectedAdminRoute>} />
                       <Route path="/admin/products" element={<ProtectedAdminRoute><AdminProducts /></ProtectedAdminRoute>} />

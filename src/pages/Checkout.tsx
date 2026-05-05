@@ -1,25 +1,22 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { useCart } from "@/context/CartContext";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PageBackButton from "@/components/PageBackButton";
 import backgroundImage from "@/assets/background.jpg";
 import { useCurrency } from "@/context/CurrencyContext";
-import { CreditCard, Smartphone, CheckCircle2 } from "lucide-react";
+import { CreditCard, Smartphone } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/api";
 
 type PayMethod = "momo" | "card";
 
 const Checkout = () => {
-  const { items, total, clearCart } = useCart();
+  const { items, total } = useCart();
   const { formatPrice } = useCurrency();
 
   const [method, setMethod] = useState<PayMethod>("momo");
   const [submitting, setSubmitting] = useState(false);
-  const [done, setDone] = useState(false);
-  const [orderRef, setOrderRef] = useState("");
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const [form, setForm] = useState({
@@ -28,15 +25,14 @@ const Checkout = () => {
     email: "",
     address: "",
     city: "",
-    momoNumber: "",
-    momoNetwork: "MTN",
-    cardName: "",
-    cardNumber: "",
-    cardExpiry: "",
-    cardCvv: "",
   });
 
   const update = (key: string, value: string) => setForm((current) => ({ ...current, [key]: value }));
+  const totalGhsLabel = new Intl.NumberFormat("en-GH", {
+    style: "currency",
+    currency: "GHS",
+    maximumFractionDigits: 0,
+  }).format(total);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,8 +45,8 @@ const Checkout = () => {
     setSubmitting(true);
     try {
       const response = await apiRequest<{
-        item: { reference: string };
-      }>("/orders", {
+        item: { authorizationUrl: string; reference: string };
+      }>("/payments/initialize", {
         method: "POST",
         body: JSON.stringify({
           customerName: form.name,
@@ -59,10 +55,7 @@ const Checkout = () => {
           address: form.address,
           city: form.city,
           paymentMethod: method === "momo" ? "MOMO" : "CARD",
-          notes:
-            method === "momo"
-              ? `MoMo ${form.momoNetwork} - ${form.momoNumber}`
-              : `Card checkout requested by ${form.cardName}`,
+          notes: `Checkout started from website via ${method === "momo" ? "MoMo" : "Card"}.`,
           items: items.map((item) => ({
             productId: item.id,
             quantity: item.quantity,
@@ -72,9 +65,7 @@ const Checkout = () => {
         }),
       });
 
-      setOrderRef(response.item.reference);
-      setDone(true);
-      clearCart();
+      window.location.assign(response.item.authorizationUrl);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to place order";
       setSubmitError(message);
@@ -83,34 +74,6 @@ const Checkout = () => {
       setSubmitting(false);
     }
   };
-
-  if (done) {
-    return (
-      <PageShell overlayClassName="bg-background/80">
-        <main className="flex flex-1 items-center">
-          <div className="container mx-auto max-w-xl px-4 pb-20 pt-32 text-center lg:px-8">
-            <CheckCircle2 size={64} className="mx-auto mb-6 text-accent" />
-            <h1 className="mb-3 font-display text-4xl font-semibold text-foreground">
-              Order Confirmed
-            </h1>
-            <p className="mb-2 font-body text-muted-foreground">
-              Thank you, {form.name.split(" ")[0] || "love"}!
-            </p>
-            <p className="mb-8 font-body text-sm text-muted-foreground">
-              Your order reference is <span className="font-medium text-foreground">{orderRef}</span>.
-              We&apos;ll send delivery updates to {form.phone}.
-            </p>
-            <Link
-              to="/shop"
-              className="inline-block rounded bg-primary px-8 py-3 font-body text-sm uppercase tracking-wider text-primary-foreground transition-opacity hover:opacity-90"
-            >
-              Continue Shopping
-            </Link>
-          </div>
-        </main>
-      </PageShell>
-    );
-  }
 
   return (
     <PageShell overlayClassName="bg-background/75">
@@ -123,7 +86,7 @@ const Checkout = () => {
             <h1 className="mb-2 font-display text-4xl font-light text-foreground">
               Check<span className="font-semibold italic">out</span>
             </h1>
-            <p className="mb-10 font-body text-muted-foreground">Secure in-app payment.</p>
+            <p className="mb-10 font-body text-muted-foreground">Secure checkout powered by Paystack.</p>
 
             <form onSubmit={handleSubmit} className="grid gap-10 lg:grid-cols-[1fr_380px]">
               <div className="space-y-8">
@@ -139,7 +102,7 @@ const Checkout = () => {
                   <div className="grid gap-4 sm:grid-cols-2">
                     <Field label="Full Name" required value={form.name} onChange={(v) => update("name", v)} />
                     <Field label="Phone" required value={form.phone} onChange={(v) => update("phone", v)} placeholder="0245 ..." />
-                    <Field label="Email (optional)" type="email" value={form.email} onChange={(v) => update("email", v)} className="sm:col-span-2" />
+                    <Field label="Email" type="email" required value={form.email} onChange={(v) => update("email", v)} className="sm:col-span-2" />
                     <Field label="Delivery Address" required value={form.address} onChange={(v) => update("address", v)} className="sm:col-span-2" />
                     <Field label="City / Region" required value={form.city} onChange={(v) => update("city", v)} className="sm:col-span-2" />
                   </div>
@@ -164,38 +127,23 @@ const Checkout = () => {
                   </div>
 
                   {method === "momo" ? (
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div>
-                        <label className="mb-1.5 block font-body text-xs uppercase tracking-wider text-muted-foreground">
-                          Network
-                        </label>
-                        <select
-                          value={form.momoNetwork}
-                          onChange={(e) => update("momoNetwork", e.target.value)}
-                          className="w-full rounded border border-border bg-background px-3 py-2.5 font-body text-sm text-foreground"
-                        >
-                          <option>MTN</option>
-                          <option>Vodafone</option>
-                          <option>AirtelTigo</option>
-                        </select>
-                      </div>
-                      <Field
-                        label="MoMo Number"
-                        required
-                        value={form.momoNumber}
-                        onChange={(v) => update("momoNumber", v)}
-                        placeholder="0245 ..."
-                      />
-                      <p className="font-body text-xs text-muted-foreground sm:col-span-2">
-                        You&apos;ll receive a prompt on your phone to authorize the payment.
+                    <div className="rounded-lg border border-border/60 bg-background/70 p-4">
+                      <p className="font-body text-sm text-foreground">
+                        You&apos;ll be redirected to secure Paystack checkout to enter your MoMo number
+                        and approve the payment prompt.
+                      </p>
+                      <p className="mt-2 font-body text-xs text-muted-foreground">
+                        Supported on Paystack-hosted checkout for Ghana Mobile Money.
                       </p>
                     </div>
                   ) : (
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <Field label="Cardholder Name" required value={form.cardName} onChange={(v) => update("cardName", v)} className="sm:col-span-2" />
-                      <Field label="Card Number" required value={form.cardNumber} onChange={(v) => update("cardNumber", v)} placeholder="1234 5678 9012 3456" className="sm:col-span-2" />
-                      <Field label="Expiry" required value={form.cardExpiry} onChange={(v) => update("cardExpiry", v)} placeholder="MM/YY" />
-                      <Field label="CVV" required value={form.cardCvv} onChange={(v) => update("cardCvv", v)} placeholder="123" />
+                    <div className="rounded-lg border border-border/60 bg-background/70 p-4">
+                      <p className="font-body text-sm text-foreground">
+                        You&apos;ll be redirected to secure Paystack checkout to enter your card details.
+                      </p>
+                      <p className="mt-2 font-body text-xs text-muted-foreground">
+                        Card details are not collected directly on this website.
+                      </p>
                     </div>
                   )}
                 </section>
@@ -245,10 +193,10 @@ const Checkout = () => {
                   disabled={submitting || items.length === 0}
                   className="mt-5 w-full rounded bg-accent py-3 font-body text-sm uppercase tracking-wider text-accent-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
                 >
-                  {submitting ? "Processing..." : `Pay ${formatPrice(total)}`}
+                  {submitting ? "Redirecting..." : `Continue to Pay ${formatPrice(total)}`}
                 </button>
                 <p className="mt-3 text-center font-body text-xs text-muted-foreground">
-                  Secure checkout - Your details are encrypted
+                  Payment is processed securely via Paystack. Final charge: {totalGhsLabel}
                 </p>
               </aside>
             </form>
