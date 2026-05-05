@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PageBackButton from "@/components/PageBackButton";
 import backgroundImage from "@/assets/background.jpg";
+import { useCurrency } from "@/context/CurrencyContext";
 import { CreditCard, Smartphone, CheckCircle2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
@@ -12,6 +13,7 @@ type PayMethod = "momo" | "card";
 
 const Checkout = () => {
   const { items, total, clearCart } = useCart();
+  const { formatPrice } = useCurrency();
 
   const [method, setMethod] = useState<PayMethod>("momo");
   const [submitting, setSubmitting] = useState(false);
@@ -181,7 +183,7 @@ const Checkout = () => {
                             {item.color} - {item.length} - x{item.quantity}
                           </p>
                         </div>
-                        <span className="text-foreground">GHS {item.price * item.quantity}</span>
+                        <span className="text-foreground">{formatPrice(item.price * item.quantity)}</span>
                       </div>
                     ))}
                   </div>
@@ -190,7 +192,7 @@ const Checkout = () => {
                 <div className="space-y-2 border-t border-border pt-4 font-body text-sm">
                   <div className="flex justify-between text-muted-foreground">
                     <span>Subtotal</span>
-                    <span>GHS {total}</span>
+                    <span>{formatPrice(total)}</span>
                   </div>
                   <div className="flex justify-between text-muted-foreground">
                     <span>Delivery</span>
@@ -198,7 +200,7 @@ const Checkout = () => {
                   </div>
                   <div className="flex justify-between border-t border-border pt-2 text-base font-semibold text-foreground">
                     <span>Total</span>
-                    <span>GHS {total}</span>
+                    <span>{formatPrice(total)}</span>
                   </div>
                 </div>
 
@@ -207,7 +209,7 @@ const Checkout = () => {
                   disabled={submitting || items.length === 0}
                   className="mt-5 w-full rounded bg-accent py-3 font-body text-sm uppercase tracking-wider text-accent-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
                 >
-                  {submitting ? "Processing..." : `Pay GHS ${total}`}
+                  {submitting ? "Processing..." : `Pay ${formatPrice(total)}`}
                 </button>
                 <p className="mt-3 text-center font-body text-xs text-muted-foreground">
                   Secure checkout - Your details are encrypted

@@ -1,10 +1,12 @@
 import { X, Plus, Minus, Trash2, CreditCard } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+import { useCurrency } from "@/context/CurrencyContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
 const CartDrawer = () => {
   const { items, isOpen, setIsOpen, removeItem, updateQuantity, total } = useCart();
+  const { formatPrice } = useCurrency();
   const navigate = useNavigate();
 
   const handleCheckout = () => {
@@ -58,7 +60,7 @@ const CartDrawer = () => {
                         {item.texture} - {item.color} - {item.length}
                       </p>
                       <p className="mt-1 font-body text-sm font-medium text-foreground">
-                        GHS {item.price}
+                        {formatPrice(item.price)}
                       </p>
                       <div className="mt-1.5 flex items-center gap-2">
                         <button
@@ -91,7 +93,7 @@ const CartDrawer = () => {
               <div className="space-y-4 border-t border-border p-5">
                 <div className="flex justify-between font-body">
                   <span className="text-muted-foreground">Total</span>
-                  <span className="text-lg font-semibold text-foreground">GHS {total}</span>
+                  <span className="text-lg font-semibold text-foreground">{formatPrice(total)}</span>
                 </div>
                 <button
                   onClick={handleCheckout}

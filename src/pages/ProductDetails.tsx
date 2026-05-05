@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { CreditCard, ShoppingBag, Star } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import CartDrawer from "@/components/CartDrawer";
@@ -8,18 +8,38 @@ import PageBackButton from "@/components/PageBackButton";
 import backgroundImage from "@/assets/background.jpg";
 import { useAdminProducts } from "@/context/AdminProductsContext";
 import { useCart } from "@/context/CartContext";
+import { useCurrency } from "@/context/CurrencyContext";
+import { useSales } from "@/context/SalesContext";
 import { getProductReviews } from "@/data/productReviews";
 import { getProductImage } from "@/lib/productImages";
 import { parseProductOptions } from "@/lib/productOptions";
+import type { CatalogProduct } from "@/types/product";
 
 const ProductDetails = () => {
   const { id = "" } = useParams();
   const navigate = useNavigate();
   const { products } = useAdminProducts();
   const { addItem, setIsOpen } = useCart();
+  const { formatPrice } = useCurrency();
+  const { getSalePrice } = useSales();
 
   const product = useMemo(() => products.find((item) => item.id === id) ?? null, [id, products]);
   const reviews = useMemo(() => (product ? getProductReviews(product.name) : []), [product]);
+  const relatedProducts = useMemo(() => {
+    if (!product) return [];
+
+    const sameTexture = products.filter(
+      (item) => item.id !== product.id && item.textureStyle === product.textureStyle,
+    );
+    const sameCategory = products.filter(
+      (item) =>
+        item.id !== product.id &&
+        item.category === product.category &&
+        item.textureStyle !== product.textureStyle,
+    );
+
+    return [...sameTexture, ...sameCategory].slice(0, 3);
+  }, [product, products]);
 
   const lengthOptions = useMemo(() => {
     if (!product) return [];
@@ -58,6 +78,8 @@ const ProductDetails = () => {
   }
 
   const resolvedImage = getProductImage(product.name, product.image);
+  const salePrice = getSalePrice(product.id, product.price);
+  const effectivePrice = salePrice ?? product.price;
 
   const addCurrentItem = () => {
     addItem({
@@ -66,7 +88,7 @@ const ProductDetails = () => {
       texture: product.textureStyle,
       color: selectedColor,
       length: selectedLength,
-      price: product.price,
+      price: effectivePrice,
       image: resolvedImage,
     });
   };
@@ -84,8 +106,13 @@ const ProductDetails = () => {
 
         <section className="mt-8 rounded-[2rem] border border-border/60 bg-card/85 p-5 backdrop-blur md:p-8 lg:p-10">
           <div className="grid gap-8 lg:grid-cols-[0.92fr_1.08fr] lg:items-start">
-            <div className="overflow-hidden rounded-[1.5rem] bg-secondary/35">
+            <div className="relative overflow-hidden rounded-[1.5rem] bg-secondary/35">
               <img src={resolvedImage} alt={product.name} className="aspect-[4/5] w-full object-cover" />
+              {salePrice ? (
+                <div className="absolute left-4 top-4 rounded-full bg-accent px-3 py-1 font-body text-[11px] uppercase tracking-[0.18em] text-accent-foreground">
+                  Sale
+                </div>
+              ) : null}
             </div>
 
             <div>
@@ -109,11 +136,23 @@ const ProductDetails = () => {
                 <span className="rounded-full border border-border px-3 py-1.5 font-body text-xs text-muted-foreground">
                   {product.category}
                 </span>
+                {salePrice ? (
+                  <span className="rounded-full bg-accent px-3 py-1.5 font-body text-xs uppercase tracking-[0.18em] text-accent-foreground">
+                    On Sale
+                  </span>
+                ) : null}
               </div>
 
-              <p className="mb-6 font-display text-3xl font-semibold text-foreground">
-                GHS {product.price}
-              </p>
+              <div className="mb-6">
+                {salePrice ? (
+                  <p className="font-body text-sm text-muted-foreground line-through">
+                    {formatPrice(product.price)}
+                  </p>
+                ) : null}
+                <p className={`font-display text-3xl font-semibold ${salePrice ? "text-accent" : "text-foreground"}`}>
+                  {formatPrice(effectivePrice)}
+                </p>
+              </div>
 
               <OptionGroup label="Length" options={lengthOptions} selected={selectedLength} onSelect={setSelectedLength} />
               <OptionGroup label="Colour" options={colorOptions} selected={selectedColor} onSelect={setSelectedColor} />
@@ -176,8 +215,73 @@ const ProductDetails = () => {
             ))}
           </div>
         </section>
+
+        {relatedProducts.length > 0 && (
+          <section className="mt-12 rounded-[2rem] border border-border/60 bg-card/85 p-6 backdrop-blur md:p-8">
+            <div className="mb-8 text-center">
+              <p className="mb-3 font-body text-sm uppercase tracking-[0.3em] text-muted-foreground">
+                You May Also Like
+              </p>
+              <h2 className="font-display text-3xl font-light text-foreground md:text-4xl">
+                More Styles To <span className="font-semibold italic">Explore</span>
+              </h2>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-3">
+              {relatedProducts.map((item) => (
+                <RelatedProductCard key={item.id} product={item} />
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </PageShell>
+  );
+};
+
+const RelatedProductCard = ({ product }: { product: CatalogProduct }) => {
+  const { formatPrice } = useCurrency();
+  const { getSalePrice } = useSales();
+  const salePrice = getSalePrice(product.id, product.price);
+  const effectivePrice = salePrice ?? product.price;
+
+  return (
+    <Link
+      to={`/shop/${product.id}`}
+      className="group overflow-hidden rounded-[1.5rem] border border-border/60 bg-background/65 transition-all duration-300 hover:-translate-y-1 hover:border-foreground/20"
+    >
+      <div className="relative overflow-hidden bg-secondary/35">
+        <img
+          src={getProductImage(product.name, product.image)}
+          alt={product.name}
+          className="aspect-[4/5] w-full object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+        {salePrice ? (
+          <div className="absolute left-3 top-3 rounded-full bg-accent px-3 py-1 font-body text-[11px] uppercase tracking-[0.18em] text-accent-foreground">
+            Sale
+          </div>
+        ) : null}
+      </div>
+      <div className="p-4">
+        <p className="mb-2 font-body text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+          {product.textureStyle}
+        </p>
+        <h3 className="font-display text-xl font-semibold text-foreground">{product.name}</h3>
+        <p className="mt-2 font-body text-sm text-muted-foreground">
+          {product.length} | {product.color}
+        </p>
+        <div className="mt-3">
+          {salePrice ? (
+            <p className="font-body text-xs text-muted-foreground line-through">
+              {formatPrice(product.price)}
+            </p>
+          ) : null}
+          <p className={`font-display text-xl font-semibold ${salePrice ? "text-accent" : "text-foreground"}`}>
+            {formatPrice(effectivePrice)}
+          </p>
+        </div>
+      </div>
+    </Link>
   );
 };
 

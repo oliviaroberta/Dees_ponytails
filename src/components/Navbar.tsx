@@ -1,24 +1,26 @@
 import { useState, useEffect } from "react";
 import { ShoppingBag, Menu, X, Search } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+import { useSales } from "@/context/SalesContext";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import SearchDialog from "./SearchDialog";
 import logo from "@/assets/logo.png";
 
-const navLinks = [
-  { label: "Home", href: "/" },
-  { label: "Shop", href: "/shop" },
-  { label: "About", href: "/about" },
-  { label: "Contact", href: "/contact" },
-];
-
 const Navbar = () => {
   const { setIsOpen, itemCount } = useCart();
+  const { isLive } = useSales();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const location = useLocation();
+  const navLinks = [
+    { label: "Home", href: "/" },
+    { label: "Shop", href: "/shop" },
+    ...(isLive ? [{ label: "Sales", href: "/sales" }] : []),
+    { label: "About", href: "/about" },
+    { label: "Contact", href: "/contact" },
+  ];
 
   useEffect(() => {
     let lastY = window.scrollY;

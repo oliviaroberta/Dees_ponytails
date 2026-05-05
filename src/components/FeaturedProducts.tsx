@@ -2,10 +2,17 @@ import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAdminProducts } from "@/context/AdminProductsContext";
+import { useCurrency } from "@/context/CurrencyContext";
+import { useSales } from "@/context/SalesContext";
 import type { CatalogProduct } from "@/types/product";
 import { getProductImage } from "@/lib/productImages";
 
 const FeaturedCard = ({ product, index }: { product: CatalogProduct; index: number }) => {
+  const { formatPrice } = useCurrency();
+  const { getSalePrice } = useSales();
+  const salePrice = getSalePrice(product.id, product.price);
+  const effectivePrice = salePrice ?? product.price;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -25,6 +32,11 @@ const FeaturedCard = ({ product, index }: { product: CatalogProduct; index: numb
             loading="lazy"
             className="aspect-[4/5] w-full object-contain bg-background/70 p-1.5 transition-transform duration-500 group-hover:scale-105"
           />
+          {salePrice ? (
+            <div className="absolute left-3 top-3 rounded-full bg-accent px-3 py-1 font-body text-[11px] uppercase tracking-[0.18em] text-accent-foreground">
+              Sale
+            </div>
+          ) : null}
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-foreground/75 via-foreground/30 to-transparent px-4 pb-4 pt-10 text-background">
             <span className="rounded-full border border-background/30 bg-background/10 px-3 py-1 font-body text-[11px] uppercase tracking-[0.22em] backdrop-blur-sm">
               Bestseller
@@ -35,10 +47,19 @@ const FeaturedCard = ({ product, index }: { product: CatalogProduct; index: numb
           {product.name}
         </h3>
         <p className="mb-2.5 font-body text-sm text-muted-foreground">
-          {product.textureStyle} • {product.length}
+          {product.textureStyle} | {product.length}
         </p>
         <div className="flex items-center justify-between">
-          <p className="font-body text-sm text-muted-foreground">From GHS {product.price}</p>
+          <div>
+            {salePrice ? (
+              <p className="font-body text-xs text-muted-foreground line-through">
+                {formatPrice(product.price)}
+              </p>
+            ) : null}
+            <p className={`font-body text-sm ${salePrice ? "text-accent" : "text-muted-foreground"}`}>
+              From {formatPrice(effectivePrice)}
+            </p>
+          </div>
           <span className="inline-flex items-center gap-1 font-body text-xs uppercase tracking-[0.18em] text-foreground">
             Tap to View
             <ArrowRight size={14} />

@@ -3,11 +3,15 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import hero1 from "@/assets/hero-group.png";
 import hero2 from "@/assets/product-natural-texture.png";
+import { useSiteContent } from "@/context/SiteContentContext";
 
 const slides = [hero1, hero2];
 
 const HeroSection = () => {
   const [index, setIndex] = useState(0);
+  const {
+    content: { hero },
+  } = useSiteContent();
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -46,22 +50,21 @@ const HeroSection = () => {
               className="max-w-3xl"
             >
               <p className="mb-4 font-body text-sm uppercase tracking-[0.3em] text-white/80">
-                Premium Ponytail Extensions
+                {hero.eyebrow}
               </p>
               <h1 className="mb-4 font-display text-4xl font-light leading-tight text-white md:text-5xl lg:text-6xl">
-                Luxury Hair That Moves
+                {hero.titleLine1}
                 <br />
-                <span className="font-semibold">With You</span>
+                <span className="font-semibold">{hero.titleHighlight}</span>
               </h1>
               <p className="mx-auto mb-6 max-w-2xl font-body text-base leading-relaxed text-white/85 lg:text-lg">
-                Soft, reusable ponytail extensions designed for elegant everyday
-                glam, birthdays, events, and effortless styling.
+                {hero.description}
               </p>
               <Link
                 to="/shop"
                 className="inline-block rounded-sm bg-white px-8 py-3.5 font-body text-sm uppercase tracking-[0.22em] text-foreground transition-all hover:bg-white/92"
               >
-                Shop Ponytails
+                {hero.ctaLabel}
               </Link>
             </motion.div>
           </div>

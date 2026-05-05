@@ -1,24 +1,11 @@
 import { motion } from "framer-motion";
-
-const steps = [
-  {
-    num: "01",
-    title: "Browse",
-    text: "Explore our collection and look through the ponytail styles, textures, and lengths available.",
-  },
-  {
-    num: "02",
-    title: "Choose",
-    text: "Pick the ponytail you want and continue the order process directly on the website.",
-  },
-  {
-    num: "03",
-    title: "Pay via MoMo",
-    text: "Make your payment securely on the website through Mobile Money.",
-  },
-];
+import { useSiteContent } from "@/context/SiteContentContext";
 
 const HowItWorks = () => {
+  const {
+    content: { howItWorks },
+  } = useSiteContent();
+
   return (
     <section className="section-transparent py-20">
       <div className="container mx-auto px-4 lg:px-8">
@@ -29,15 +16,15 @@ const HowItWorks = () => {
           className="mb-14 text-center"
         >
           <p className="mb-3 font-body text-sm uppercase tracking-[0.3em] text-muted-foreground">
-            Simple Process
+            {howItWorks.eyebrow}
           </p>
           <h2 className="font-display text-4xl font-light text-foreground md:text-5xl">
-            How It <span className="font-semibold italic">Works</span>
+            {howItWorks.title} <span className="font-semibold italic">{howItWorks.titleHighlight}</span>
           </h2>
         </motion.div>
 
         <div className="mx-auto grid max-w-5xl gap-10 md:grid-cols-3">
-          {steps.map((step, i) => (
+          {howItWorks.steps.map((step, i) => (
             <motion.div
               key={step.num}
               initial={{ opacity: 0, y: 20 }}

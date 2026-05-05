@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ShoppingBag, CreditCard } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+import { useCurrency } from "@/context/CurrencyContext";
 import type { CatalogProduct } from "@/types/product";
 import { useNavigate } from "react-router-dom";
 import { getProductImage } from "@/lib/productImages";
@@ -20,6 +21,7 @@ const parseOptions = (value?: string) =>
 
 const ProductDetailDialog = ({ product, open, onOpenChange }: Props) => {
   const { addItem, setIsOpen } = useCart();
+  const { formatPrice } = useCurrency();
   const navigate = useNavigate();
 
   const lengthOptions = useMemo(() => {
@@ -125,7 +127,7 @@ const ProductDetailDialog = ({ product, open, onOpenChange }: Props) => {
                   Price
                 </p>
                 <p className="font-display text-3xl font-semibold text-foreground">
-                  GHS {product.price}
+                  {formatPrice(product.price)}
                 </p>
               </div>
             </div>

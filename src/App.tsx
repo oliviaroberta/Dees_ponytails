@@ -6,6 +6,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { CartProvider } from "@/context/CartContext";
 import { AdminProductsProvider } from "@/context/AdminProductsContext";
+import { CurrencyProvider } from "@/context/CurrencyContext";
+import { SiteContentProvider } from "@/context/SiteContentContext";
+import { SalesProvider } from "@/context/SalesContext";
 import Index from "./pages/Index";
 import Shop from "./pages/Shop";
 import ProductDetails from "./pages/ProductDetails";
@@ -20,6 +23,9 @@ import EditProduct from "./pages/admin/EditProduct";
 import AdminOrders from "./pages/admin/AdminOrders";
 import AdminReviews from "./pages/admin/AdminReviews";
 import AdminSettings from "./pages/admin/AdminSettings";
+import AdminContent from "./pages/admin/AdminContent";
+import AdminSales from "./pages/admin/AdminSales";
+import Sales from "./pages/Sales";
 
 const queryClient = new QueryClient();
 
@@ -36,31 +42,40 @@ const ScrollToTop = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <CartProvider>
-        <AdminProductsProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <ScrollToTop />
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/shop" element={<Shop />} />
-              <Route path="/shop/:id" element={<ProductDetails />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/products" element={<AdminProducts />} />
-              <Route path="/admin/products/new" element={<AddProduct />} />
-              <Route path="/admin/products/:id/edit" element={<EditProduct />} />
-              <Route path="/admin/orders" element={<AdminOrders />} />
-              <Route path="/admin/reviews" element={<AdminReviews />} />
-              <Route path="/admin/settings" element={<AdminSettings />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </AdminProductsProvider>
-      </CartProvider>
+      <CurrencyProvider>
+        <SiteContentProvider>
+          <SalesProvider>
+            <CartProvider>
+              <AdminProductsProvider>
+                <Toaster />
+                <Sonner />
+                <BrowserRouter>
+                  <ScrollToTop />
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/shop" element={<Shop />} />
+                    <Route path="/shop/:id" element={<ProductDetails />} />
+                    <Route path="/sales" element={<Sales />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/contact" element={<Contact />} />
+                    <Route path="/checkout" element={<Checkout />} />
+                    <Route path="/admin" element={<AdminDashboard />} />
+                    <Route path="/admin/products" element={<AdminProducts />} />
+                    <Route path="/admin/products/new" element={<AddProduct />} />
+                    <Route path="/admin/products/:id/edit" element={<EditProduct />} />
+                    <Route path="/admin/content" element={<AdminContent />} />
+                    <Route path="/admin/sales" element={<AdminSales />} />
+                    <Route path="/admin/orders" element={<AdminOrders />} />
+                    <Route path="/admin/reviews" element={<AdminReviews />} />
+                    <Route path="/admin/settings" element={<AdminSettings />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </BrowserRouter>
+              </AdminProductsProvider>
+            </CartProvider>
+          </SalesProvider>
+        </SiteContentProvider>
+      </CurrencyProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

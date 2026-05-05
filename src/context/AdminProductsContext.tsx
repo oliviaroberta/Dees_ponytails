@@ -20,6 +20,31 @@ const defaultProducts: CatalogProduct[] = seedProducts.map((product, index) => (
   ...product,
 }));
 
+const normalizeProduct = (
+  product: Partial<CatalogProduct> | null | undefined,
+  index: number,
+): CatalogProduct => {
+  const fallback = defaultProducts[index % defaultProducts.length];
+
+  return {
+    id: product?.id || fallback.id,
+    name: product?.name || fallback.name,
+    image: product?.image || fallback.image,
+    category: product?.category || fallback.category,
+    textureStyle: product?.textureStyle || fallback.textureStyle,
+    length: product?.length || fallback.length,
+    color: product?.color || fallback.color,
+    stock: typeof product?.stock === "number" ? product.stock : fallback.stock,
+    price: typeof product?.price === "number" ? product.price : fallback.price,
+    description: product?.description || fallback.description,
+    featured: typeof product?.featured === "boolean" ? product.featured : fallback.featured,
+    status:
+      product?.status === "inStock" || product?.status === "outOfStock"
+        ? product.status
+        : fallback.status,
+  };
+};
+
 const AdminProductsContext = createContext<AdminProductsContextType | undefined>(undefined);
 
 export const AdminProductsProvider = ({ children }: { children: React.ReactNode }) => {
@@ -34,7 +59,12 @@ export const AdminProductsProvider = ({ children }: { children: React.ReactNode 
     }
 
     try {
-      return JSON.parse(saved) as CatalogProduct[];
+      const parsed = JSON.parse(saved) as Array<Partial<CatalogProduct>>;
+      if (!Array.isArray(parsed) || parsed.length === 0) {
+        return defaultProducts;
+      }
+
+      return parsed.map((product, index) => normalizeProduct(product, index));
     } catch {
       return defaultProducts;
     }

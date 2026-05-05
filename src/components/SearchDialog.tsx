@@ -4,6 +4,9 @@ import { Search } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useAdminProducts } from "@/context/AdminProductsContext";
+import { useCurrency } from "@/context/CurrencyContext";
+import { useSales } from "@/context/SalesContext";
+import { getProductImage } from "@/lib/productImages";
 
 interface Props {
   open: boolean;
@@ -14,6 +17,8 @@ const SearchDialog = ({ open, onOpenChange }: Props) => {
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
   const { products } = useAdminProducts();
+  const { formatPrice } = useCurrency();
+  const { getSalePrice } = useSales();
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -28,10 +33,10 @@ const SearchDialog = ({ open, onOpenChange }: Props) => {
     );
   }, [products, query]);
 
-  const handleSelect = () => {
+  const handleSelect = (productId: string) => {
     onOpenChange(false);
     setQuery("");
-    navigate("/shop");
+    navigate(`/shop?product=${productId}`);
   };
 
   return (
@@ -61,30 +66,42 @@ const SearchDialog = ({ open, onOpenChange }: Props) => {
                 No matches. Try another keyword.
               </p>
             ) : (
-              results.map((product) => (
-                <button
-                  key={product.id}
-                  onClick={handleSelect}
-                  className="flex w-full items-center gap-3 rounded p-2 text-left transition-colors hover:bg-secondary/60"
-                >
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="h-12 w-12 rounded object-cover"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-display text-sm font-medium text-foreground">
-                      {product.name}
-                    </p>
-                    <p className="font-body text-xs text-muted-foreground">
-                      {product.textureStyle}
-                    </p>
-                  </div>
-                  <span className="font-body text-xs text-muted-foreground">
-                    From GHS {product.price}
-                  </span>
-                </button>
-              ))
+              results.map((product) => {
+                const salePrice = getSalePrice(product.id, product.price);
+                const effectivePrice = salePrice ?? product.price;
+
+                return (
+                  <button
+                    key={product.id}
+                    onClick={() => handleSelect(product.id)}
+                    className="flex w-full items-center gap-3 rounded p-2 text-left transition-colors hover:bg-secondary/60"
+                  >
+                    <img
+                      src={getProductImage(product.name, product.image)}
+                      alt={product.name}
+                      className="h-12 w-12 rounded object-cover"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-display text-sm font-medium text-foreground">
+                        {product.name}
+                      </p>
+                      <p className="font-body text-xs text-muted-foreground">
+                        {product.textureStyle}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      {salePrice ? (
+                        <p className="font-body text-[11px] text-muted-foreground line-through">
+                          {formatPrice(product.price)}
+                        </p>
+                      ) : null}
+                      <span className={`font-body text-xs ${salePrice ? "text-accent" : "text-muted-foreground"}`}>
+                        From {formatPrice(effectivePrice)}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })
             )}
           </div>
         </div>

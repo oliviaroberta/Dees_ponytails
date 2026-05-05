@@ -69,6 +69,8 @@ const AdminDashboard = () => {
           <div className="mt-5 space-y-3">
             <ActionLink to="/admin/products" label="Manage Products" />
             <ActionLink to="/admin/products/new" label="Add New Product" />
+            <ActionLink to="/admin/content" label="Edit Store Content" />
+            <ActionLink to="/admin/sales" label="Manage Sales Page" />
           </div>
         </section>
       </div>
