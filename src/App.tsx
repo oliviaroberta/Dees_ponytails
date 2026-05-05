@@ -23,7 +23,6 @@ import EditProduct from "./pages/admin/EditProduct";
 import AdminOrders from "./pages/admin/AdminOrders";
 import AdminReviews from "./pages/admin/AdminReviews";
 import AdminSettings from "./pages/admin/AdminSettings";
-import AdminContent from "./pages/admin/AdminContent";
 import AdminSales from "./pages/admin/AdminSales";
 import Sales from "./pages/Sales";
 
@@ -63,7 +62,6 @@ const App = () => (
                     <Route path="/admin/products" element={<AdminProducts />} />
                     <Route path="/admin/products/new" element={<AddProduct />} />
                     <Route path="/admin/products/:id/edit" element={<EditProduct />} />
-                    <Route path="/admin/content" element={<AdminContent />} />
                     <Route path="/admin/sales" element={<AdminSales />} />
                     <Route path="/admin/orders" element={<AdminOrders />} />
                     <Route path="/admin/reviews" element={<AdminReviews />} />

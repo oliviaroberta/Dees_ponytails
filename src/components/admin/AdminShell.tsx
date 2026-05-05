@@ -1,12 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Package, PlusCircle, FileText, BadgePercent, ClipboardList, MessageSquareQuote, Settings, Store } from "lucide-react";
+import { LayoutDashboard, Package, PlusCircle, BadgePercent, ClipboardList, MessageSquareQuote, Settings, Store } from "lucide-react";
 import backgroundImage from "@/assets/background.jpg";
 
 const navItems = [
   { label: "Dashboard", to: "/admin", icon: LayoutDashboard, group: "Overview" },
   { label: "Products", to: "/admin/products", icon: Package, group: "Catalog" },
   { label: "Add Product", to: "/admin/products/new", icon: PlusCircle, group: "Catalog" },
-  { label: "Content", to: "/admin/content", icon: FileText, group: "Storefront" },
   { label: "Sales", to: "/admin/sales", icon: BadgePercent, group: "Storefront" },
   { label: "Orders", to: "/admin/orders", icon: ClipboardList, group: "Operations" },
   { label: "Reviews", to: "/admin/reviews", icon: MessageSquareQuote, group: "Operations" },

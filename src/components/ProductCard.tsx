@@ -41,13 +41,13 @@ const ProductCard = ({ product, highlighted = false }: Props) => {
       viewport={{ once: true, margin: "-50px" }}
       transition={{ duration: 0.5 }}
       id={`product-card-${product.id}`}
-      className={`group rounded-2xl transition-all duration-500 ${
+      className={`group rounded-[1.75rem] border border-border/60 bg-card/90 p-4 backdrop-blur transition-all duration-500 ${
         highlighted ? "ring-2 ring-foreground/60 ring-offset-4 ring-offset-background" : ""
       }`}
     >
       <Link
         to={`/shop/${product.id}`}
-        className="relative mb-4 block overflow-hidden rounded-lg bg-secondary/50"
+        className="relative mb-4 block overflow-hidden rounded-[1.4rem] bg-secondary/50"
         aria-label={`View ${product.name} details`}
       >
         <img
@@ -68,52 +68,84 @@ const ProductCard = ({ product, highlighted = false }: Props) => {
             Sale
           </div>
         ) : null}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-end gap-2 bg-gradient-to-t from-foreground/70 via-foreground/20 to-transparent p-3">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-foreground/70 via-foreground/20 to-transparent p-3">
+          <span className="rounded-full bg-background/95 px-3 py-1 font-body text-[11px] uppercase tracking-[0.18em] text-foreground">
+            {product.category}
+          </span>
           <span className="rounded-full bg-background/90 px-3 py-1 font-body text-[11px] uppercase tracking-[0.2em] text-foreground">
             {product.textureStyle}
           </span>
         </div>
       </Link>
 
-      <p className="mb-2 font-body text-xs uppercase tracking-[0.25em] text-muted-foreground">
-        {product.textureStyle}
-      </p>
-      <Link
-        to={`/shop/${product.id}`}
-        className="mb-1 block font-display text-xl font-semibold text-foreground transition-colors hover:text-accent"
-      >
-        {product.name}
-      </Link>
-      <p className="mb-3 font-body text-sm leading-relaxed text-muted-foreground">
-        {product.description}
-      </p>
-
-      <div className="mb-3 flex flex-wrap gap-2">
-        <span className="rounded border border-border px-3 py-1.5 font-body text-xs text-muted-foreground">
-          Length: {product.length}
-        </span>
-        <span className="rounded border border-border px-3 py-1.5 font-body text-xs text-muted-foreground">
-          Color: {product.color}
-        </span>
-      </div>
-
-      <div className="flex items-center justify-between">
-        <div>
-          {salePrice ? (
-            <p className="font-body text-xs text-muted-foreground line-through">
-              {formatPrice(product.price)}
+      <div className="rounded-[1.25rem] bg-background/60 p-4">
+        <div className="mb-3 flex items-start justify-between gap-3">
+          <div>
+            <p className="mb-1 font-body text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
+              {product.textureStyle}
             </p>
-          ) : null}
-          <span className={`font-display text-2xl font-semibold ${salePrice ? "text-accent" : "text-foreground"}`}>
-            {formatPrice(effectivePrice)}
+            <Link
+              to={`/shop/${product.id}`}
+              className="block font-display text-xl font-semibold leading-snug text-foreground transition-colors hover:text-accent"
+            >
+              {product.name}
+            </Link>
+          </div>
+          <span
+            className={`shrink-0 rounded-full px-3 py-1 font-body text-[11px] uppercase tracking-[0.18em] ${
+              product.status === "inStock"
+                ? "bg-primary text-primary-foreground"
+                : "bg-secondary text-foreground"
+            }`}
+          >
+            {product.status === "inStock" ? "In Stock" : "Out"}
           </span>
         </div>
+
+        <p className="mb-4 line-clamp-2 font-body text-sm leading-relaxed text-muted-foreground">
+          {product.description}
+        </p>
+
+        <div className="mb-4 grid gap-2 sm:grid-cols-2">
+          <div className="rounded-2xl border border-border/70 bg-card/70 px-3 py-2.5">
+            <p className="font-body text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+              Length
+            </p>
+            <p className="mt-1 font-body text-sm text-foreground">{product.length}</p>
+          </div>
+          <div className="rounded-2xl border border-border/70 bg-card/70 px-3 py-2.5">
+            <p className="font-body text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+              Color
+            </p>
+            <p className="mt-1 font-body text-sm text-foreground">{product.color}</p>
+          </div>
+        </div>
+
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            {salePrice ? (
+              <p className="font-body text-xs text-muted-foreground line-through">
+                {formatPrice(product.price)}
+              </p>
+            ) : null}
+            <span className={`font-display text-2xl font-semibold ${salePrice ? "text-accent" : "text-foreground"}`}>
+              {formatPrice(effectivePrice)}
+            </span>
+          </div>
+          <Link
+            to={`/shop/${product.id}`}
+            className="font-body text-xs uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground"
+          >
+            View Details
+          </Link>
+        </div>
+
         <button
           onClick={handleAdd}
-          className="flex items-center gap-2 rounded bg-accent px-5 py-2.5 font-body text-sm tracking-wide text-accent-foreground transition-opacity hover:opacity-90"
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-accent px-5 py-3 font-body text-sm tracking-wide text-accent-foreground transition-opacity hover:opacity-90"
         >
           <ShoppingBag size={16} />
-          Add
+          Add to Cart
         </button>
       </div>
     </motion.div>

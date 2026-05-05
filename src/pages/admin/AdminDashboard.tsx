@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Package, AlertTriangle, Layers3, PlusCircle, FileText, BadgePercent } from "lucide-react";
+import { Package, AlertTriangle, Layers3, PlusCircle, BadgePercent, Settings } from "lucide-react";
 import AdminShell from "@/components/admin/AdminShell";
 import { useAdminProducts } from "@/context/AdminProductsContext";
 
@@ -90,8 +90,8 @@ const AdminDashboard = () => {
           <div className="mt-5 space-y-3">
             <ActionLink to="/admin/products/new" label="Add New Product" icon={PlusCircle} />
             <ActionLink to="/admin/products" label="Manage Products" icon={Package} />
-            <ActionLink to="/admin/content" label="Edit Homepage Content" icon={FileText} />
             <ActionLink to="/admin/sales" label="Prepare Sales Launch" icon={BadgePercent} />
+            <ActionLink to="/admin/settings" label="Store Settings & Content" icon={Settings} />
           </div>
         </section>
       </div>
