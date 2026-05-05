@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { apiRequest } from "@/lib/api";
+import { useAuth } from "./AuthContext";
 
 export interface HeroContent {
   eyebrow: string;
@@ -38,12 +40,13 @@ export interface SiteContent {
 
 interface SiteContentContextType {
   content: SiteContent;
-  updateHero: (hero: HeroContent) => void;
-  updateHowItWorks: (howItWorks: SiteContent["howItWorks"]) => void;
-  updateAbout: (about: SiteContent["about"]) => void;
+  isLoading: boolean;
+  updateContent: (content: SiteContent) => Promise<void>;
+  updateHero: (hero: HeroContent) => Promise<void>;
+  updateHowItWorks: (howItWorks: SiteContent["howItWorks"]) => Promise<void>;
+  updateAbout: (about: SiteContent["about"]) => Promise<void>;
+  refreshContent: () => Promise<void>;
 }
-
-const STORAGE_KEY = "dees_site_content";
 
 const defaultContent: SiteContent = {
   hero: {
@@ -99,58 +102,107 @@ const defaultContent: SiteContent = {
   },
 };
 
-const normalizeContent = (saved: Partial<SiteContent> | null | undefined): SiteContent => ({
-  hero: {
-    ...defaultContent.hero,
-    ...(saved?.hero ?? {}),
-  },
-  howItWorks: {
-    ...defaultContent.howItWorks,
-    ...(saved?.howItWorks ?? {}),
-    steps: defaultContent.howItWorks.steps.map((step, index) => ({
-      ...step,
-      ...(saved?.howItWorks?.steps?.[index] ?? {}),
-      num: step.num,
-    })),
-  },
-  about: {
-    ...defaultContent.about,
-    ...(saved?.about ?? {}),
-    features: defaultContent.about.features.map((feature, index) => ({
-      ...feature,
-      ...(saved?.about?.features?.[index] ?? {}),
-    })),
-  },
-});
-
 const SiteContentContext = createContext<SiteContentContextType | undefined>(undefined);
+let siteContentCache: SiteContent | null = null;
+let siteContentRequest: Promise<SiteContent> | null = null;
+
+const fetchSiteContent = async () => {
+  if (siteContentCache) {
+    return siteContentCache;
+  }
+
+  if (!siteContentRequest) {
+    siteContentRequest = apiRequest<{ item: { content: SiteContent } }>("/site-content")
+      .then((response) => {
+        siteContentCache = response.item.content;
+        return response.item.content;
+      })
+      .finally(() => {
+        siteContentRequest = null;
+      });
+  }
+
+  return siteContentRequest;
+};
 
 export const SiteContentProvider = ({ children }: { children: React.ReactNode }) => {
-  const [content, setContent] = useState<SiteContent>(() => {
-    if (typeof window === "undefined") return defaultContent;
+  const { accessToken } = useAuth();
+  const [content, setContent] = useState<SiteContent>(defaultContent);
+  const [isLoading, setIsLoading] = useState(true);
 
-    const saved = window.localStorage.getItem(STORAGE_KEY);
-    if (!saved) return defaultContent;
-
+  const refreshContent = async () => {
+    setIsLoading(true);
     try {
-      return normalizeContent(JSON.parse(saved) as Partial<SiteContent>);
+      siteContentCache = null;
+      const nextContent = await fetchSiteContent();
+      setContent(nextContent);
     } catch {
-      return defaultContent;
+      setContent(defaultContent);
+    } finally {
+      setIsLoading(false);
     }
-  });
+  };
 
   useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(content));
-  }, [content]);
+    let isMounted = true;
+
+    const load = async () => {
+      setIsLoading(true);
+      try {
+        const nextContent = await fetchSiteContent();
+        if (isMounted) {
+          setContent(nextContent);
+        }
+      } catch {
+        if (isMounted) {
+          setContent(defaultContent);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    void load();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const saveContent = async (nextContent: SiteContent) => {
+    if (!accessToken) {
+      throw new Error("Admin authentication is required");
+    }
+
+    const response = await apiRequest<{ item: { content: SiteContent } }>("/site-content", {
+      method: "PUT",
+      token: accessToken,
+      body: JSON.stringify(nextContent),
+    });
+
+    siteContentCache = response.item.content;
+    setContent(response.item.content);
+  };
 
   const value = useMemo<SiteContentContextType>(
     () => ({
       content,
-      updateHero: (hero) => setContent((current) => ({ ...current, hero })),
-      updateHowItWorks: (howItWorks) => setContent((current) => ({ ...current, howItWorks })),
-      updateAbout: (about) => setContent((current) => ({ ...current, about })),
+      isLoading,
+      updateContent: saveContent,
+      updateHero: async (hero) => {
+        await saveContent({ ...content, hero });
+      },
+      updateHowItWorks: async (howItWorks) => {
+        await saveContent({ ...content, howItWorks });
+      },
+      updateAbout: async (about) => {
+        await saveContent({ ...content, about });
+      },
+      refreshContent,
     }),
-    [content],
+    [accessToken, content, isLoading],
   );
 
   return <SiteContentContext.Provider value={value}>{children}</SiteContentContext.Provider>;

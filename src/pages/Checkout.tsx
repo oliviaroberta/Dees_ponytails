@@ -8,6 +8,7 @@ import backgroundImage from "@/assets/background.jpg";
 import { useCurrency } from "@/context/CurrencyContext";
 import { CreditCard, Smartphone, CheckCircle2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/api";
 
 type PayMethod = "momo" | "card";
 
@@ -19,6 +20,7 @@ const Checkout = () => {
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [orderRef, setOrderRef] = useState("");
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     name: "",
@@ -36,21 +38,50 @@ const Checkout = () => {
 
   const update = (key: string, value: string) => setForm((current) => ({ ...current, [key]: value }));
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (items.length === 0) {
       toast({ title: "Your cart is empty", description: "Add some ponytails first." });
       return;
     }
 
+    setSubmitError(null);
     setSubmitting(true);
-    setTimeout(() => {
-      const ref = "DP-" + Math.random().toString(36).slice(2, 8).toUpperCase();
-      setOrderRef(ref);
+    try {
+      const response = await apiRequest<{
+        item: { reference: string };
+      }>("/orders", {
+        method: "POST",
+        body: JSON.stringify({
+          customerName: form.name,
+          customerPhone: form.phone,
+          customerEmail: form.email,
+          address: form.address,
+          city: form.city,
+          paymentMethod: method === "momo" ? "MOMO" : "CARD",
+          notes:
+            method === "momo"
+              ? `MoMo ${form.momoNetwork} - ${form.momoNumber}`
+              : `Card checkout requested by ${form.cardName}`,
+          items: items.map((item) => ({
+            productId: item.id,
+            quantity: item.quantity,
+            color: item.color,
+            length: item.length,
+          })),
+        }),
+      });
+
+      setOrderRef(response.item.reference);
       setDone(true);
-      setSubmitting(false);
       clearCart();
-    }, 1600);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to place order";
+      setSubmitError(message);
+      toast({ title: "Order failed", description: message });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (done) {
@@ -96,6 +127,11 @@ const Checkout = () => {
 
             <form onSubmit={handleSubmit} className="grid gap-10 lg:grid-cols-[1fr_380px]">
               <div className="space-y-8">
+                {submitError ? (
+                  <section className="rounded-lg border border-destructive/30 bg-destructive/10 p-4">
+                    <p className="font-body text-sm text-destructive">{submitError}</p>
+                  </section>
+                ) : null}
                 <section className="rounded-lg border border-border/60 bg-card/80 p-6 backdrop-blur">
                   <h2 className="mb-4 font-display text-lg font-semibold text-foreground">
                     Contact & Delivery

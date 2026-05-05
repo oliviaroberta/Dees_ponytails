@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from "react";
 import type React from "react";
 import { ShoppingBag, Eye } from "lucide-react";
 import { motion } from "framer-motion";
@@ -6,7 +7,7 @@ import { useCurrency } from "@/context/CurrencyContext";
 import { useSales } from "@/context/SalesContext";
 import type { CatalogProduct } from "@/types/product";
 import { getProductImage } from "@/lib/productImages";
-import { getPrimaryProductOption } from "@/lib/productOptions";
+import { parseProductOptions } from "@/lib/productOptions";
 import { Link } from "react-router-dom";
 
 interface Props {
@@ -16,10 +17,25 @@ interface Props {
 
 const ProductCard = ({ product, highlighted = false }: Props) => {
   const { addItem } = useCart();
-  const { formatPrice } = useCurrency();
+  const { formatPrice, currency } = useCurrency();
   const { getSalePrice } = useSales();
   const salePrice = getSalePrice(product.id, product.price);
   const effectivePrice = salePrice ?? product.price;
+  const lengthOptions = useMemo(() => {
+    const parsed = parseProductOptions(product.length);
+    return parsed.length > 0 ? parsed : ["Standard"];
+  }, [product.length]);
+  const colorOptions = useMemo(() => {
+    const parsed = parseProductOptions(product.color);
+    return parsed.length > 0 ? parsed : ["Natural Black"];
+  }, [product.color]);
+  const [selectedLength, setSelectedLength] = useState("");
+  const [selectedColor, setSelectedColor] = useState("");
+
+  useEffect(() => {
+    setSelectedLength(lengthOptions[0] ?? "");
+    setSelectedColor(colorOptions[0] ?? "");
+  }, [colorOptions, lengthOptions, product.id]);
 
   const handleAdd = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -27,8 +43,8 @@ const ProductCard = ({ product, highlighted = false }: Props) => {
       id: product.id,
       name: product.name,
       texture: product.textureStyle,
-      color: getPrimaryProductOption(product.color, "Natural Black"),
-      length: getPrimaryProductOption(product.length, "Standard"),
+      color: selectedColor,
+      length: selectedLength,
       price: effectivePrice,
       image: getProductImage(product.name, product.image),
     });
@@ -111,26 +127,61 @@ const ProductCard = ({ product, highlighted = false }: Props) => {
             <p className="font-body text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
               Length
             </p>
-            <p className="mt-1 font-body text-sm text-foreground">{product.length}</p>
+            <select
+              value={selectedLength}
+              onChange={(event) => setSelectedLength(event.target.value)}
+              className="mt-1 w-full bg-transparent font-body text-sm text-foreground outline-none"
+              aria-label={`Select length for ${product.name}`}
+            >
+              {lengthOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="rounded-2xl border border-border/70 bg-card/70 px-3 py-2.5">
             <p className="font-body text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
               Color
             </p>
-            <p className="mt-1 font-body text-sm text-foreground">{product.color}</p>
+            <select
+              value={selectedColor}
+              onChange={(event) => setSelectedColor(event.target.value)}
+              className="mt-1 w-full bg-transparent font-body text-sm text-foreground outline-none"
+              aria-label={`Select colour for ${product.name}`}
+            >
+              {colorOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 
         <div className="flex items-end justify-between gap-4">
           <div>
             {salePrice ? (
+              <p className="font-body text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                Original Price
+              </p>
+            ) : null}
+            {salePrice ? (
               <p className="font-body text-xs text-muted-foreground line-through">
                 {formatPrice(product.price)}
               </p>
             ) : null}
+            <p className="mt-1 font-body text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+              {salePrice ? "Sale Price" : "Price"}
+            </p>
             <span className={`font-display text-2xl font-semibold ${salePrice ? "text-accent" : "text-foreground"}`}>
               {formatPrice(effectivePrice)}
             </span>
+            {currency !== "GHS" ? (
+              <p className="mt-1 font-body text-[11px] text-muted-foreground">
+                Displayed in {currency}
+              </p>
+            ) : null}
           </div>
           <Link
             to={`/shop/${product.id}`}

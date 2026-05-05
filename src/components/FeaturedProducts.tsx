@@ -8,7 +8,7 @@ import type { CatalogProduct } from "@/types/product";
 import { getProductImage } from "@/lib/productImages";
 
 const FeaturedCard = ({ product, index }: { product: CatalogProduct; index: number }) => {
-  const { formatPrice } = useCurrency();
+  const { formatPrice, currency } = useCurrency();
   const { getSalePrice } = useSales();
   const salePrice = getSalePrice(product.id, product.price);
   const effectivePrice = salePrice ?? product.price;
@@ -52,13 +52,26 @@ const FeaturedCard = ({ product, index }: { product: CatalogProduct; index: numb
         <div className="flex items-center justify-between">
           <div>
             {salePrice ? (
+              <p className="font-body text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                Original Price
+              </p>
+            ) : null}
+            {salePrice ? (
               <p className="font-body text-xs text-muted-foreground line-through">
                 {formatPrice(product.price)}
               </p>
             ) : null}
-            <p className={`font-body text-sm ${salePrice ? "text-accent" : "text-muted-foreground"}`}>
-              From {formatPrice(effectivePrice)}
+            <p className="mt-1 font-body text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+              {salePrice ? "Sale Price" : "Price"}
             </p>
+            <p className={`font-body text-sm ${salePrice ? "text-accent" : "text-muted-foreground"}`}>
+              {formatPrice(effectivePrice)}
+            </p>
+            {currency !== "GHS" ? (
+              <p className="mt-1 font-body text-[11px] text-muted-foreground">
+                Displayed in {currency}
+              </p>
+            ) : null}
           </div>
           <span className="inline-flex items-center gap-1 font-body text-xs uppercase tracking-[0.18em] text-foreground">
             Tap to View

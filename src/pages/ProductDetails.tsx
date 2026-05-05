@@ -20,7 +20,7 @@ const ProductDetails = () => {
   const navigate = useNavigate();
   const { products } = useAdminProducts();
   const { addItem, setIsOpen } = useCart();
-  const { formatPrice } = useCurrency();
+  const { formatPrice, currency } = useCurrency();
   const { getSalePrice } = useSales();
 
   const product = useMemo(() => products.find((item) => item.id === id) ?? null, [id, products]);
@@ -145,13 +145,26 @@ const ProductDetails = () => {
 
               <div className="mb-6">
                 {salePrice ? (
+                  <p className="font-body text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                    Original Price
+                  </p>
+                ) : null}
+                {salePrice ? (
                   <p className="font-body text-sm text-muted-foreground line-through">
                     {formatPrice(product.price)}
                   </p>
                 ) : null}
+                <p className="mt-1 font-body text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                  {salePrice ? "Sale Price" : "Price"}
+                </p>
                 <p className={`font-display text-3xl font-semibold ${salePrice ? "text-accent" : "text-foreground"}`}>
                   {formatPrice(effectivePrice)}
                 </p>
+                {currency !== "GHS" ? (
+                  <p className="mt-2 font-body text-xs text-muted-foreground">
+                    Displayed in {currency}. Admin base price stays in GHS.
+                  </p>
+                ) : null}
               </div>
 
               <OptionGroup label="Length" options={lengthOptions} selected={selectedLength} onSelect={setSelectedLength} />
@@ -240,7 +253,7 @@ const ProductDetails = () => {
 };
 
 const RelatedProductCard = ({ product }: { product: CatalogProduct }) => {
-  const { formatPrice } = useCurrency();
+  const { formatPrice, currency } = useCurrency();
   const { getSalePrice } = useSales();
   const salePrice = getSalePrice(product.id, product.price);
   const effectivePrice = salePrice ?? product.price;
@@ -272,13 +285,26 @@ const RelatedProductCard = ({ product }: { product: CatalogProduct }) => {
         </p>
         <div className="mt-3">
           {salePrice ? (
+            <p className="font-body text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+              Original Price
+            </p>
+          ) : null}
+          {salePrice ? (
             <p className="font-body text-xs text-muted-foreground line-through">
               {formatPrice(product.price)}
             </p>
           ) : null}
+          <p className="mt-1 font-body text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+            {salePrice ? "Sale Price" : "Price"}
+          </p>
           <p className={`font-display text-xl font-semibold ${salePrice ? "text-accent" : "text-foreground"}`}>
             {formatPrice(effectivePrice)}
           </p>
+          {currency !== "GHS" ? (
+            <p className="mt-1 font-body text-[11px] text-muted-foreground">
+              Displayed in {currency}
+            </p>
+          ) : null}
         </div>
       </div>
     </Link>

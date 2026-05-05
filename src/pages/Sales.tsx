@@ -12,7 +12,7 @@ import { getProductImage } from "@/lib/productImages";
 const Sales = () => {
   const { products } = useAdminProducts();
   const { sales, isLive } = useSales();
-  const { formatPrice } = useCurrency();
+  const { formatPrice, currency } = useCurrency();
 
   const saleProducts = sales.saleItems
     .map((saleItem) => {
@@ -58,6 +58,11 @@ const Sales = () => {
                 <p className="mx-auto mt-4 max-w-2xl font-body text-sm leading-relaxed text-muted-foreground">
                   {sales.description}
                 </p>
+                {currency !== "GHS" ? (
+                  <p className="mx-auto mt-3 max-w-2xl font-body text-xs text-muted-foreground">
+                    Prices on this page are displayed in {currency}. Base store pricing is set in GHS.
+                  </p>
+                ) : null}
               </div>
 
               <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">

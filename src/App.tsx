@@ -4,11 +4,13 @@ import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import ProtectedAdminRoute from "@/components/admin/ProtectedAdminRoute";
 import { CartProvider } from "@/context/CartContext";
 import { AdminProductsProvider } from "@/context/AdminProductsContext";
 import { CurrencyProvider } from "@/context/CurrencyContext";
 import { SiteContentProvider } from "@/context/SiteContentContext";
 import { SalesProvider } from "@/context/SalesContext";
+import { AuthProvider } from "@/context/AuthContext";
 import Index from "./pages/Index";
 import Shop from "./pages/Shop";
 import ProductDetails from "./pages/ProductDetails";
@@ -24,6 +26,7 @@ import AdminOrders from "./pages/admin/AdminOrders";
 import AdminReviews from "./pages/admin/AdminReviews";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminSales from "./pages/admin/AdminSales";
+import AdminLogin from "./pages/admin/AdminLogin";
 import Sales from "./pages/Sales";
 
 const queryClient = new QueryClient();
@@ -41,39 +44,42 @@ const ScrollToTop = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <CurrencyProvider>
-        <SiteContentProvider>
-          <SalesProvider>
-            <CartProvider>
-              <AdminProductsProvider>
-                <Toaster />
-                <Sonner />
-                <BrowserRouter>
-                  <ScrollToTop />
-                  <Routes>
-                    <Route path="/" element={<Index />} />
-                    <Route path="/shop" element={<Shop />} />
-                    <Route path="/shop/:id" element={<ProductDetails />} />
-                    <Route path="/sales" element={<Sales />} />
-                    <Route path="/about" element={<About />} />
-                    <Route path="/contact" element={<Contact />} />
-                    <Route path="/checkout" element={<Checkout />} />
-                    <Route path="/admin" element={<AdminDashboard />} />
-                    <Route path="/admin/products" element={<AdminProducts />} />
-                    <Route path="/admin/products/new" element={<AddProduct />} />
-                    <Route path="/admin/products/:id/edit" element={<EditProduct />} />
-                    <Route path="/admin/sales" element={<AdminSales />} />
-                    <Route path="/admin/orders" element={<AdminOrders />} />
-                    <Route path="/admin/reviews" element={<AdminReviews />} />
-                    <Route path="/admin/settings" element={<AdminSettings />} />
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </BrowserRouter>
-              </AdminProductsProvider>
-            </CartProvider>
-          </SalesProvider>
-        </SiteContentProvider>
-      </CurrencyProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <CurrencyProvider>
+            <SiteContentProvider>
+              <SalesProvider>
+                <CartProvider>
+                  <AdminProductsProvider>
+                    <Toaster />
+                    <Sonner />
+                    <ScrollToTop />
+                    <Routes>
+                      <Route path="/" element={<Index />} />
+                      <Route path="/shop" element={<Shop />} />
+                      <Route path="/shop/:id" element={<ProductDetails />} />
+                      <Route path="/sales" element={<Sales />} />
+                      <Route path="/about" element={<About />} />
+                      <Route path="/contact" element={<Contact />} />
+                      <Route path="/checkout" element={<Checkout />} />
+                      <Route path="/admin/login" element={<AdminLogin />} />
+                      <Route path="/admin" element={<ProtectedAdminRoute><AdminDashboard /></ProtectedAdminRoute>} />
+                      <Route path="/admin/products" element={<ProtectedAdminRoute><AdminProducts /></ProtectedAdminRoute>} />
+                      <Route path="/admin/products/new" element={<ProtectedAdminRoute><AddProduct /></ProtectedAdminRoute>} />
+                      <Route path="/admin/products/:id/edit" element={<ProtectedAdminRoute><EditProduct /></ProtectedAdminRoute>} />
+                      <Route path="/admin/sales" element={<ProtectedAdminRoute><AdminSales /></ProtectedAdminRoute>} />
+                      <Route path="/admin/orders" element={<ProtectedAdminRoute><AdminOrders /></ProtectedAdminRoute>} />
+                      <Route path="/admin/reviews" element={<ProtectedAdminRoute><AdminReviews /></ProtectedAdminRoute>} />
+                      <Route path="/admin/settings" element={<ProtectedAdminRoute><AdminSettings /></ProtectedAdminRoute>} />
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </AdminProductsProvider>
+                </CartProvider>
+              </SalesProvider>
+            </SiteContentProvider>
+          </CurrencyProvider>
+        </AuthProvider>
+      </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
 );

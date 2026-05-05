@@ -65,7 +65,7 @@ const AdminDashboard = () => {
                     <div>
                       <p className="font-display text-lg font-semibold text-foreground">{product.name}</p>
                       <p className="mt-1 font-body text-sm text-muted-foreground">
-                        {product.textureStyle} | GHS {product.price} | Stock {product.stock}
+                        {product.textureStyle} | Base GHS {product.price} | Stock {product.stock}
                       </p>
                     </div>
                   </div>

@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { apiRequest } from "@/lib/api";
+import { useAuth } from "./AuthContext";
 
 export interface SaleItem {
   productId: string;
@@ -12,22 +14,15 @@ export interface SalesContent {
   saleItems: SaleItem[];
 }
 
-interface LegacySalesContent {
-  enabled?: boolean;
-  title?: string;
-  description?: string;
-  productIds?: string[];
-}
-
 interface SalesContextType {
   sales: SalesContent;
   isLive: boolean;
-  updateSales: (sales: SalesContent) => void;
+  isLoading: boolean;
+  updateSales: (sales: SalesContent) => Promise<void>;
+  refreshSales: () => Promise<void>;
   getSalePrice: (productId: string, originalPrice: number) => number | null;
   isProductOnSale: (productId: string) => boolean;
 }
-
-const STORAGE_KEY = "dees_sales_content";
 
 const defaultSales: SalesContent = {
   enabled: false,
@@ -36,76 +31,149 @@ const defaultSales: SalesContent = {
   saleItems: [],
 };
 
+const SalesContext = createContext<SalesContextType | undefined>(undefined);
+let salesCache: SalesContent | null = null;
+let salesRequest: Promise<SalesContent> | null = null;
+
 const normalizeSales = (
-  saved: Partial<SalesContent> | LegacySalesContent | null | undefined,
-): SalesContent => {
-  const rawSaleItems = Array.isArray((saved as Partial<SalesContent>)?.saleItems)
-    ? (saved as Partial<SalesContent>).saleItems
-    : [];
-  const legacyProductIds = Array.isArray((saved as LegacySalesContent)?.productIds)
-    ? (saved as LegacySalesContent).productIds
-    : [];
+  payload:
+    | {
+        title: string;
+        description: string;
+        isEnabled: boolean;
+        items: Array<{ productId: string; salePrice: number }>;
+      }
+    | null
+    | undefined,
+): SalesContent => ({
+  enabled: payload?.isEnabled ?? false,
+  title: payload?.title ?? defaultSales.title,
+  description: payload?.description ?? defaultSales.description,
+  saleItems: payload?.items?.map((item) => ({
+    productId: item.productId,
+    salePrice: item.salePrice,
+  })) ?? [],
+});
 
-  const saleItems =
-    rawSaleItems.length > 0
-      ? rawSaleItems
-          .filter((item): item is SaleItem => !!item && !!item.productId)
-          .map((item) => ({
-            productId: item.productId,
-            salePrice: typeof item.salePrice === "number" ? item.salePrice : 0,
-          }))
-      : legacyProductIds.filter(Boolean).map((productId) => ({ productId, salePrice: 0 }));
+const fetchSales = async () => {
+  if (salesCache) {
+    return salesCache;
+  }
 
-  return {
-    enabled: typeof saved?.enabled === "boolean" ? saved.enabled : defaultSales.enabled,
-    title: saved?.title || defaultSales.title,
-    description: saved?.description || defaultSales.description,
-    saleItems,
-  };
+  if (!salesRequest) {
+    salesRequest = apiRequest<{
+      items: Array<{
+        title: string;
+        description: string;
+        isEnabled: boolean;
+        items: Array<{ productId: string; salePrice: number }>;
+      }>;
+    }>("/sales")
+      .then((response) => {
+        const normalized = normalizeSales(response.items[0]);
+        salesCache = normalized;
+        return normalized;
+      })
+      .finally(() => {
+        salesRequest = null;
+      });
+  }
+
+  return salesRequest;
 };
 
-const SalesContext = createContext<SalesContextType | undefined>(undefined);
-
 export const SalesProvider = ({ children }: { children: React.ReactNode }) => {
-  const [sales, setSales] = useState<SalesContent>(() => {
-    if (typeof window === "undefined") return defaultSales;
+  const { accessToken } = useAuth();
+  const [sales, setSales] = useState<SalesContent>(defaultSales);
+  const [isLoading, setIsLoading] = useState(true);
 
-    const saved = window.localStorage.getItem(STORAGE_KEY);
-    if (!saved) return defaultSales;
-
+  const refreshSales = async () => {
+    setIsLoading(true);
     try {
-      return normalizeSales(
-        JSON.parse(saved) as Partial<SalesContent> | LegacySalesContent,
-      );
+      salesCache = null;
+      const nextSales = await fetchSales();
+      setSales(nextSales);
     } catch {
-      return defaultSales;
+      setSales(defaultSales);
+    } finally {
+      setIsLoading(false);
     }
-  });
+  };
 
   useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(sales));
-  }, [sales]);
+    let isMounted = true;
+
+    const load = async () => {
+      setIsLoading(true);
+      try {
+        const nextSales = await fetchSales();
+        if (isMounted) {
+          setSales(nextSales);
+        }
+      } catch {
+        if (isMounted) {
+          setSales(defaultSales);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    void load();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const value = useMemo<SalesContextType>(
     () => ({
       sales,
+      isLoading,
       isLive: sales.enabled && sales.saleItems.some((item) => item.salePrice > 0),
-      updateSales: setSales,
+      updateSales: async (nextSales) => {
+        if (!accessToken) {
+          throw new Error("Admin authentication is required");
+        }
+
+        const response = await apiRequest<{
+          item: {
+            title: string;
+            description: string;
+            isEnabled: boolean;
+            items: Array<{ productId: string; salePrice: number }>;
+          };
+        }>("/sales", {
+          method: "POST",
+          token: accessToken,
+          body: JSON.stringify({
+            title: nextSales.title,
+            description: nextSales.description,
+            isEnabled: nextSales.enabled,
+            items: nextSales.saleItems,
+          }),
+        });
+
+        const normalizedSales = normalizeSales(response.item);
+        salesCache = normalizedSales;
+        setSales(normalizedSales);
+      },
+      refreshSales,
       getSalePrice: (productId, originalPrice) => {
         if (!sales.enabled) return null;
-
         const saleItem = sales.saleItems.find((item) => item.productId === productId);
-        if (!saleItem) return null;
-        if (saleItem.salePrice <= 0) return null;
-        if (saleItem.salePrice >= originalPrice) return null;
-
+        if (!saleItem || saleItem.salePrice <= 0 || saleItem.salePrice >= originalPrice) {
+          return null;
+        }
         return saleItem.salePrice;
       },
       isProductOnSale: (productId) =>
         sales.enabled &&
         sales.saleItems.some((item) => item.productId === productId && item.salePrice > 0),
     }),
-    [sales],
+    [accessToken, isLoading, sales],
   );
 
   return <SalesContext.Provider value={value}>{children}</SalesContext.Provider>;

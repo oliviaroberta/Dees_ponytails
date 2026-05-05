@@ -1,120 +1,246 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { seedProducts } from "@/data/products";
-import { getProductImage } from "@/lib/productImages";
-import type { CatalogProduct, CatalogProductInput, ProductStatus } from "@/types/product";
+import { API_BASE_URL, apiRequest } from "@/lib/api";
+import type { CatalogProduct, CatalogProductInput } from "@/types/product";
+import { useAuth } from "./AuthContext";
 
 export type AdminProduct = CatalogProduct;
 export type AdminProductInput = CatalogProductInput;
 
 interface AdminProductsContextType {
   products: CatalogProduct[];
-  addProduct: (product: CatalogProductInput) => void;
-  updateProduct: (id: string, updates: CatalogProductInput) => void;
-  deleteProduct: (id: string) => void;
+  isLoading: boolean;
+  error: string | null;
+  uploadProductImage: (file: File) => Promise<string>;
+  addProduct: (product: CatalogProductInput) => Promise<void>;
+  updateProduct: (id: string, updates: CatalogProductInput) => Promise<void>;
+  deleteProduct: (id: string) => Promise<void>;
   getProductById: (id: string) => CatalogProduct | undefined;
+  refreshProducts: () => Promise<void>;
 }
 
-const STORAGE_KEY = "dees_admin_products";
+interface BackendProduct {
+  id: string;
+  slug: string;
+  name: string;
+  image: string;
+  category: string;
+  textureStyle: string;
+  length: string;
+  color: string;
+  stock: number;
+  price: number;
+  description: string;
+  featured: boolean;
+  status: "IN_STOCK" | "OUT_OF_STOCK";
+}
 
-const defaultProducts: CatalogProduct[] = seedProducts.map((product, index) => ({
-  id: `seed-${index + 1}`,
-  ...product,
-}));
+const AdminProductsContext = createContext<AdminProductsContextType | undefined>(undefined);
+let productsCache: CatalogProduct[] | null = null;
+let productsRequest: Promise<CatalogProduct[]> | null = null;
+const BACKEND_BASE_URL = API_BASE_URL.replace(/\/api$/, "");
 
-const resolveStoredImage = (name: string, image: string | null | undefined, fallbackImage: string) => {
-  const trimmed = image?.trim() ?? "";
+const toFrontendStatus = (status: BackendProduct["status"]) =>
+  status === "IN_STOCK" ? "inStock" : "outOfStock";
 
-  if (!trimmed) {
-    return getProductImage(name, fallbackImage);
+const toBackendStatus = (status: CatalogProduct["status"]) =>
+  status === "inStock" ? "IN_STOCK" : "OUT_OF_STOCK";
+
+const slugify = (value: string) =>
+  value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+const normalizeProductImage = (image: string) => {
+  const trimmed = image.trim();
+
+  if (trimmed.startsWith("/uploads/")) {
+    return `${BACKEND_BASE_URL}${trimmed}`;
   }
 
-  // Built Vite asset URLs are hashed and can change on every deploy.
-  // If one of those was persisted in localStorage, recover to the current bundled image.
-  if (trimmed.includes("/assets/")) {
-    return getProductImage(name, fallbackImage);
+  if (
+    trimmed.startsWith("http://localhost:4000/uploads/") ||
+    trimmed.startsWith("https://localhost:4000/uploads/")
+  ) {
+    return trimmed.replace(/^https?:\/\/localhost:4000/, BACKEND_BASE_URL);
   }
 
   return trimmed;
 };
 
-const normalizeProduct = (
-  product: Partial<CatalogProduct> | null | undefined,
-  index: number,
-): CatalogProduct => {
-  const fallback = defaultProducts[index % defaultProducts.length];
-  const name = product?.name || fallback.name;
+const mapProduct = (product: BackendProduct): CatalogProduct => ({
+  id: product.id,
+  name: product.name,
+  image: normalizeProductImage(product.image),
+  category: product.category,
+  textureStyle: product.textureStyle,
+  length: product.length,
+  color: product.color,
+  stock: product.stock,
+  price: product.price,
+  description: product.description,
+  featured: product.featured,
+  status: toFrontendStatus(product.status),
+});
 
-  return {
-    id: product?.id || fallback.id,
-    name,
-    image: resolveStoredImage(name, product?.image, fallback.image),
-    category: product?.category || fallback.category,
-    textureStyle: product?.textureStyle || fallback.textureStyle,
-    length: product?.length || fallback.length,
-    color: product?.color || fallback.color,
-    stock: typeof product?.stock === "number" ? product.stock : fallback.stock,
-    price: typeof product?.price === "number" ? product.price : fallback.price,
-    description: product?.description || fallback.description,
-    featured: typeof product?.featured === "boolean" ? product.featured : fallback.featured,
-    status:
-      product?.status === "inStock" || product?.status === "outOfStock"
-        ? product.status
-        : fallback.status,
-  };
+const fetchProducts = async () => {
+  if (productsCache) {
+    return productsCache;
+  }
+
+  if (!productsRequest) {
+    productsRequest = apiRequest<{ items: BackendProduct[] }>("/products")
+      .then((response) => {
+        const mapped = response.items.map(mapProduct);
+        productsCache = mapped;
+        return mapped;
+      })
+      .finally(() => {
+        productsRequest = null;
+      });
+  }
+
+  return productsRequest;
 };
 
-const AdminProductsContext = createContext<AdminProductsContextType | undefined>(undefined);
-
 export const AdminProductsProvider = ({ children }: { children: React.ReactNode }) => {
-  const [products, setProducts] = useState<CatalogProduct[]>(() => {
-    if (typeof window === "undefined") {
-      return defaultProducts;
-    }
+  const { accessToken } = useAuth();
+  const [products, setProducts] = useState<CatalogProduct[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-    const saved = window.localStorage.getItem(STORAGE_KEY);
-    if (!saved) {
-      return defaultProducts;
-    }
+  const refreshProducts = async () => {
+    setIsLoading(true);
+    setError(null);
 
     try {
-      const parsed = JSON.parse(saved) as Array<Partial<CatalogProduct>>;
-      if (!Array.isArray(parsed) || parsed.length === 0) {
-        return defaultProducts;
-      }
-
-      return parsed.map((product, index) => normalizeProduct(product, index));
-    } catch {
-      return defaultProducts;
+      productsCache = null;
+      const nextProducts = await fetchProducts();
+      setProducts(nextProducts);
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : "Failed to load products");
+    } finally {
+      setIsLoading(false);
     }
-  });
+  };
 
   useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
-  }, [products]);
+    let isMounted = true;
 
-  const value = useMemo(
+    const load = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const nextProducts = await fetchProducts();
+        if (isMounted) {
+          setProducts(nextProducts);
+        }
+      } catch (loadError) {
+        if (isMounted) {
+          setError(loadError instanceof Error ? loadError.message : "Failed to load products");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    void load();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const value = useMemo<AdminProductsContextType>(
     () => ({
       products,
-      addProduct: (product) => {
-        setProducts((current) => [
-          ...current,
-          {
-            id: crypto.randomUUID(),
+      isLoading,
+      error,
+      uploadProductImage: async (file) => {
+        if (!accessToken) {
+          throw new Error("Admin authentication is required");
+        }
+
+        const formData = new FormData();
+        formData.append("image", file);
+
+        const response = await apiRequest<{ imageUrl: string }>("/uploads/product-image", {
+          method: "POST",
+          token: accessToken,
+          body: formData,
+        });
+
+        return response.imageUrl;
+      },
+      addProduct: async (product) => {
+        if (!accessToken) {
+          throw new Error("Admin authentication is required");
+        }
+
+        const response = await apiRequest<{ item: BackendProduct }>("/products", {
+          method: "POST",
+          token: accessToken,
+          body: JSON.stringify({
             ...product,
-          },
-        ]);
+            slug: slugify(product.name),
+            status: toBackendStatus(product.status),
+          }),
+        });
+
+        const nextProduct = mapProduct(response.item);
+        setProducts((current) => {
+          const nextProducts = [...current, nextProduct];
+          productsCache = nextProducts;
+          return nextProducts;
+        });
       },
-      updateProduct: (id, updates) => {
-        setProducts((current) =>
-          current.map((product) => (product.id === id ? { id, ...updates } : product)),
-        );
+      updateProduct: async (id, updates) => {
+        if (!accessToken) {
+          throw new Error("Admin authentication is required");
+        }
+
+        const response = await apiRequest<{ item: BackendProduct }>(`/products/${id}`, {
+          method: "PATCH",
+          token: accessToken,
+          body: JSON.stringify({
+            ...updates,
+            slug: slugify(updates.name),
+            status: toBackendStatus(updates.status),
+          }),
+        });
+
+        setProducts((current) => {
+          const nextProducts = current.map((product) =>
+            product.id === id ? mapProduct(response.item) : product,
+          );
+          productsCache = nextProducts;
+          return nextProducts;
+        });
       },
-      deleteProduct: (id) => {
-        setProducts((current) => current.filter((product) => product.id !== id));
+      deleteProduct: async (id) => {
+        if (!accessToken) {
+          throw new Error("Admin authentication is required");
+        }
+
+        await apiRequest(`/products/${id}`, {
+          method: "DELETE",
+          token: accessToken,
+        });
+
+        setProducts((current) => {
+          const nextProducts = current.filter((product) => product.id !== id);
+          productsCache = nextProducts;
+          return nextProducts;
+        });
       },
       getProductById: (id) => products.find((product) => product.id === id),
+      refreshProducts,
     }),
-    [products],
+    [accessToken, error, isLoading, products],
   );
 
   return <AdminProductsContext.Provider value={value}>{children}</AdminProductsContext.Provider>;

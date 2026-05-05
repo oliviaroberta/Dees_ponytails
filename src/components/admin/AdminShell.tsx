@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Package, PlusCircle, BadgePercent, ClipboardList, MessageSquareQuote, Settings, Store } from "lucide-react";
+import { LayoutDashboard, Package, PlusCircle, BadgePercent, ClipboardList, MessageSquareQuote, Settings, Store, Menu, X } from "lucide-react";
 import backgroundImage from "@/assets/background.jpg";
+import { useAuth } from "@/context/AuthContext";
 
 const navItems = [
   { label: "Dashboard", to: "/admin", icon: LayoutDashboard, group: "Overview" },
@@ -26,6 +28,8 @@ const AdminShell = ({
   actions?: React.ReactNode;
 }) => {
   const location = useLocation();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { admin, logout } = useAuth();
 
   return (
     <div
@@ -57,45 +61,78 @@ const AdminShell = ({
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
-                <div className="rounded-full border border-border/60 bg-card/80 px-4 py-2 font-body text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                  Frontend Only
-                </div>
+                {admin ? (
+                  <div className="hidden rounded-full border border-border bg-background/70 px-4 py-2 font-body text-xs uppercase tracking-[0.16em] text-muted-foreground sm:block">
+                    {admin.fullName}
+                  </div>
+                ) : null}
                 <Link
                   to="/"
                   className="rounded-full border border-border bg-background/70 px-4 py-2 font-body text-xs uppercase tracking-[0.2em] text-muted-foreground transition-colors hover:text-foreground"
                 >
                   Back to Store
                 </Link>
+                <button
+                  type="button"
+                  onClick={() => void logout()}
+                  className="rounded-full border border-border bg-background/70 px-4 py-2 font-body text-xs uppercase tracking-[0.2em] text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Log Out
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMobileMenuOpen((current) => !current)}
+                  className="ml-1 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background/70 text-foreground transition-colors hover:text-foreground lg:hidden"
+                  aria-label="Toggle admin menu"
+                >
+                  {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
+                </button>
               </div>
             </div>
           </div>
         </header>
 
         <div className="container mx-auto px-4 py-6 lg:px-8">
-          <div className="mb-6 overflow-x-auto pb-2 lg:hidden">
-            <div className="flex min-w-max gap-2">
-              {navItems.map((item) => {
-                const isActive =
-                  location.pathname === item.to ||
-                  (item.to !== "/admin" && location.pathname.startsWith(item.to));
-                const Icon = item.icon;
+          <div className="mb-6 lg:hidden">
+            {mobileMenuOpen ? (
+              <div className="mt-3 rounded-[1.5rem] border border-border/60 bg-card/95 p-3 backdrop-blur">
+                <div className="space-y-4">
+                  {navGroups.map((group) => (
+                    <div key={group}>
+                      <p className="mb-2 px-2 font-body text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
+                        {group}
+                      </p>
+                      <div className="space-y-1.5">
+                        {navItems
+                          .filter((item) => item.group === group)
+                          .map((item) => {
+                            const isActive =
+                              location.pathname === item.to ||
+                              (item.to !== "/admin" && location.pathname.startsWith(item.to));
+                            const Icon = item.icon;
 
-                return (
-                  <Link
-                    key={item.to}
-                    to={item.to}
-                    className={`inline-flex items-center gap-2 rounded-full border px-4 py-2.5 font-body text-xs uppercase tracking-[0.18em] transition-colors ${
-                      isActive
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border/60 bg-card/85 text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    <Icon size={14} />
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </div>
+                            return (
+                              <Link
+                                key={item.to}
+                                to={item.to}
+                                onClick={() => setMobileMenuOpen(false)}
+                                className={`flex items-center gap-3 rounded-2xl px-4 py-3 font-body text-sm transition-colors ${
+                                  isActive
+                                    ? "bg-primary text-primary-foreground"
+                                    : "text-muted-foreground hover:bg-background hover:text-foreground"
+                                }`}
+                              >
+                                <Icon size={16} />
+                                <span>{item.label}</span>
+                              </Link>
+                            );
+                          })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
 
           <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">

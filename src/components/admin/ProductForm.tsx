@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { AdminProductInput } from "@/context/AdminProductsContext";
 import type { ProductStatus } from "@/types/product";
 
@@ -23,17 +23,33 @@ const ProductForm = ({
 }: {
   initialValues: ProductFormValues;
   submitLabel: string;
-  onSubmit: (values: AdminProductInput) => void;
+  onSubmit: (values: AdminProductInput, imageFile: File | null) => void | Promise<void>;
 }) => {
   const [values, setValues] = useState<ProductFormValues>(initialValues);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>("");
 
   const update = <K extends keyof ProductFormValues>(key: K, value: ProductFormValues[K]) => {
     setValues((current) => ({ ...current, [key]: value }));
   };
 
+  useEffect(() => {
+    if (!imageFile) {
+      setPreviewUrl("");
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(imageFile);
+    setPreviewUrl(objectUrl);
+
+    return () => {
+      URL.revokeObjectURL(objectUrl);
+    };
+  }, [imageFile]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({
+    void onSubmit({
       name: values.name.trim(),
       image: values.image.trim(),
       category: values.category.trim(),
@@ -45,10 +61,13 @@ const ProductForm = ({
       description: values.description.trim(),
       featured: values.featured,
       status: values.status,
-    });
+    }, imageFile);
   };
 
-  const previewImage = useMemo(() => values.image.trim(), [values.image]);
+  const previewImage = useMemo(
+    () => previewUrl || values.image.trim(),
+    [previewUrl, values.image],
+  );
 
   return (
     <form onSubmit={handleSubmit} className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
@@ -63,7 +82,23 @@ const ProductForm = ({
             <Field label="Product Name" value={values.name} onChange={(value) => update("name", value)} required />
             <Field label="Category" value={values.category} onChange={(value) => update("category", value)} required />
             <Field label="Texture / Style" value={values.textureStyle} onChange={(value) => update("textureStyle", value)} required />
-            <Field label="Image URL / Path" value={values.image} onChange={(value) => update("image", value)} required className="md:col-span-2" />
+            <div className="md:col-span-2">
+              <label className="mb-1.5 block font-body text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                Product Image
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(event) => {
+                  const nextFile = event.target.files?.[0] ?? null;
+                  setImageFile(nextFile);
+                }}
+                className="w-full rounded-2xl border border-border bg-background px-4 py-3 font-body text-sm text-foreground outline-none transition-colors file:mr-4 file:rounded-full file:border-0 file:bg-primary file:px-4 file:py-2 file:font-body file:text-xs file:uppercase file:tracking-[0.18em] file:text-primary-foreground focus:border-foreground"
+              />
+              <p className="mt-1.5 font-body text-xs text-muted-foreground">
+                Upload an image from your device. {values.image ? "Leave blank to keep the current image." : "Required for new products."}
+              </p>
+            </div>
           </div>
         </section>
 
@@ -77,7 +112,7 @@ const ProductForm = ({
             <Field label="Length" value={values.length} onChange={(value) => update("length", value)} required hint='Example: 18", 22", 26"' />
             <Field label="Color" value={values.color} onChange={(value) => update("color", value)} required hint="Example: Natural Black, Brown" />
             <Field label="Stock" type="number" value={values.stock} onChange={(value) => update("stock", value)} required />
-            <Field label="Price" type="number" value={values.price} onChange={(value) => update("price", value)} required />
+            <Field label="Base Price (GHS)" type="number" value={values.price} onChange={(value) => update("price", value)} required />
           </div>
         </section>
 
@@ -177,7 +212,7 @@ const ProductForm = ({
 
             <div className="rounded-2xl border border-border/60 bg-background/60 p-4">
               <p className="font-body text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                Price
+                Base Price (GHS)
               </p>
               <p className="mt-2 font-display text-3xl font-semibold text-foreground">
                 GHS {values.price || "0"}
@@ -186,6 +221,11 @@ const ProductForm = ({
                 Stock: {values.stock || "0"}
               </p>
             </div>
+            {imageFile ? (
+              <p className="font-body text-xs text-muted-foreground">
+                Selected file: {imageFile.name}
+              </p>
+            ) : null}
           </div>
 
           <button

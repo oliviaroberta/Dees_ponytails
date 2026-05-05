@@ -1,4 +1,5 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { useState } from "react";
 import AdminShell from "@/components/admin/AdminShell";
 import ProductForm from "@/components/admin/ProductForm";
 import { useAdminProducts } from "@/context/AdminProductsContext";
@@ -6,8 +7,20 @@ import { useAdminProducts } from "@/context/AdminProductsContext";
 const EditProduct = () => {
   const navigate = useNavigate();
   const { id = "" } = useParams();
-  const { getProductById, updateProduct } = useAdminProducts();
+  const { getProductById, updateProduct, uploadProductImage, isLoading } = useAdminProducts();
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const product = getProductById(id);
+
+  if (isLoading) {
+    return (
+      <AdminShell title="Edit Product" description="Update the selected product details.">
+        <div className="rounded-2xl border border-border/60 bg-card/90 p-8 text-center backdrop-blur">
+          <p className="font-body text-sm text-muted-foreground">Loading product...</p>
+        </div>
+      </AdminShell>
+    );
+  }
 
   if (!product) {
     return (
@@ -34,6 +47,11 @@ const EditProduct = () => {
       description="Update the selected product details."
     >
       <div className="mx-auto max-w-3xl">
+        {error ? (
+          <div className="mb-4 rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 font-body text-sm text-destructive">
+            {error}
+          </div>
+        ) : null}
         <ProductForm
           initialValues={{
             name: product.name,
@@ -48,10 +66,22 @@ const EditProduct = () => {
             featured: product.featured,
             status: product.status,
           }}
-          submitLabel="Update Product"
-          onSubmit={(values) => {
-            updateProduct(product.id, values);
-            navigate("/admin/products");
+          submitLabel={isSubmitting ? "Updating..." : "Update Product"}
+          onSubmit={async (values, imageFile) => {
+            setError(null);
+            setIsSubmitting(true);
+            try {
+              const nextImage = imageFile ? await uploadProductImage(imageFile) : values.image;
+              await updateProduct(product.id, {
+                ...values,
+                image: nextImage,
+              });
+              navigate("/admin/products");
+            } catch (submitError) {
+              setError(submitError instanceof Error ? submitError.message : "Failed to update product");
+            } finally {
+              setIsSubmitting(false);
+            }
           }}
         />
       </div>

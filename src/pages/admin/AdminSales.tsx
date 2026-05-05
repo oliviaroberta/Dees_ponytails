@@ -1,12 +1,18 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AdminShell from "@/components/admin/AdminShell";
 import { useAdminProducts } from "@/context/AdminProductsContext";
 import { useSales } from "@/context/SalesContext";
 
 const AdminSales = () => {
-  const { products } = useAdminProducts();
-  const { sales, isLive, updateSales } = useSales();
+  const { products, isLoading: productsLoading } = useAdminProducts();
+  const { sales, isLive, updateSales, isLoading } = useSales();
   const [draft, setDraft] = useState(sales);
+  const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    setDraft(sales);
+  }, [sales]);
 
   const hasChanges = useMemo(
     () => JSON.stringify(draft) !== JSON.stringify(sales),
@@ -25,14 +31,36 @@ const AdminSales = () => {
       actions={
         <button
           type="button"
-          onClick={() => updateSales(draft)}
-          disabled={!hasChanges}
+          onClick={async () => {
+            setError(null);
+            setIsSaving(true);
+            try {
+              await updateSales(draft);
+            } catch (saveError) {
+              setError(saveError instanceof Error ? saveError.message : "Failed to save sales");
+            } finally {
+              setIsSaving(false);
+            }
+          }}
+          disabled={!hasChanges || isSaving}
           className="rounded bg-primary px-5 py-2.5 font-body text-xs uppercase tracking-[0.2em] text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
         >
-          Save Sales
+          {isSaving ? "Saving..." : "Save Sales"}
         </button>
       }
     >
+      {error ? (
+        <section className="rounded-2xl border border-destructive/30 bg-destructive/10 p-4">
+          <p className="font-body text-sm text-destructive">{error}</p>
+        </section>
+      ) : null}
+      {isLoading || productsLoading ? (
+        <section className="rounded-2xl border border-border/60 bg-card/90 p-8 text-center backdrop-blur">
+          <p className="font-body text-sm text-muted-foreground">Loading sales data...</p>
+        </section>
+      ) : null}
+      {!isLoading && !productsLoading ? (
+        <>
       <section className="rounded-2xl border border-border/60 bg-card/90 p-6 backdrop-blur">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
@@ -173,6 +201,8 @@ const AdminSales = () => {
           })}
         </div>
       </section>
+        </>
+      ) : null}
     </AdminShell>
   );
 };

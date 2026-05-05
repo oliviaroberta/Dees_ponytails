@@ -5,7 +5,7 @@ import AdminShell from "@/components/admin/AdminShell";
 import { useAdminProducts } from "@/context/AdminProductsContext";
 
 const AdminProducts = () => {
-  const { products, deleteProduct } = useAdminProducts();
+  const { products, deleteProduct, isLoading, error } = useAdminProducts();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "inStock" | "outOfStock">("all");
 
@@ -67,7 +67,15 @@ const AdminProducts = () => {
         </div>
       </section>
 
-      {filteredProducts.length === 0 ? (
+      {isLoading ? (
+        <section className="rounded-[1.75rem] border border-dashed border-border/70 bg-card/90 p-10 text-center backdrop-blur">
+          <p className="font-body text-sm text-muted-foreground">Loading products...</p>
+        </section>
+      ) : error ? (
+        <section className="rounded-[1.75rem] border border-destructive/30 bg-destructive/10 p-10 text-center">
+          <p className="font-body text-sm text-destructive">{error}</p>
+        </section>
+      ) : filteredProducts.length === 0 ? (
         <section className="rounded-[1.75rem] border border-dashed border-border/70 bg-card/90 p-10 text-center backdrop-blur">
           <p className="font-body text-sm text-muted-foreground">
             No products match your current search or filter.
@@ -95,7 +103,7 @@ const AdminProducts = () => {
                         {product.textureStyle} | {product.length} | {product.color}
                       </p>
                     </div>
-                    <p className="font-display text-xl font-semibold text-foreground">GHS {product.price}</p>
+                    <p className="font-display text-xl font-semibold text-foreground">Base GHS {product.price}</p>
                   </div>
 
                   <p className="mt-3 font-body text-sm leading-relaxed text-muted-foreground">
@@ -135,7 +143,7 @@ const AdminProducts = () => {
                     </Link>
                     <button
                       type="button"
-                      onClick={() => deleteProduct(product.id)}
+                      onClick={() => void deleteProduct(product.id)}
                       className="inline-flex items-center gap-2 rounded-full border border-destructive/40 px-4 py-2 font-body text-xs uppercase tracking-[0.18em] text-destructive transition-colors hover:bg-destructive/10"
                     >
                       <Trash2 size={13} />
