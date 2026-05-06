@@ -1,0 +1,55 @@
+import crypto from "node:crypto";
+import { env } from "../config/env.js";
+import { AppError } from "./app-error.js";
+
+const CLOUDINARY_FOLDER = env.CLOUDINARY_UPLOAD_FOLDER || "dees-ponytails/products";
+
+export const isCloudinaryConfigured = () =>
+  !!env.CLOUDINARY_CLOUD_NAME && !!env.CLOUDINARY_API_KEY && !!env.CLOUDINARY_API_SECRET;
+
+export const uploadImageToCloudinary = async ({
+  buffer,
+  mimeType,
+  fileName,
+}: {
+  buffer: Buffer;
+  mimeType: string;
+  fileName: string;
+}) => {
+  if (!isCloudinaryConfigured()) {
+    throw new AppError("Cloudinary is not configured", 503);
+  }
+
+  const timestamp = Math.floor(Date.now() / 1000);
+  const publicId = fileName.replace(/\.[a-z0-9]+$/i, "");
+  const signatureBase = `folder=${CLOUDINARY_FOLDER}&public_id=${publicId}&timestamp=${timestamp}${env.CLOUDINARY_API_SECRET}`;
+  const signature = crypto.createHash("sha1").update(signatureBase).digest("hex");
+  const dataUri = `data:${mimeType};base64,${buffer.toString("base64")}`;
+  const formData = new FormData();
+
+  formData.append("file", dataUri);
+  formData.append("api_key", env.CLOUDINARY_API_KEY!);
+  formData.append("timestamp", timestamp.toString());
+  formData.append("folder", CLOUDINARY_FOLDER);
+  formData.append("public_id", publicId);
+  formData.append("signature", signature);
+
+  const response = await fetch(
+    `https://api.cloudinary.com/v1_1/${env.CLOUDINARY_CLOUD_NAME}/image/upload`,
+    {
+      method: "POST",
+      body: formData,
+    },
+  );
+
+  const payload = (await response.json()) as {
+    secure_url?: string;
+    error?: { message?: string };
+  };
+
+  if (!response.ok || !payload.secure_url) {
+    throw new AppError(payload.error?.message || "Cloud image upload failed", 502);
+  }
+
+  return payload.secure_url;
+};

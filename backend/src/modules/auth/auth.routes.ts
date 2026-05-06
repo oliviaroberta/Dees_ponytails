@@ -18,8 +18,26 @@ import {
   verifyRefreshToken,
 } from "../../utils/auth.js";
 import { requireAdmin } from "../../middleware/require-admin.js";
+import { createRateLimit } from "../../middleware/rate-limit.js";
 
 const authRouter = Router();
+const authLoginRateLimit = createRateLimit({
+  keyPrefix: "auth:login",
+  windowMs: 10 * 60 * 1000,
+  max: 8,
+  message: "Too many login attempts. Please try again in a few minutes.",
+});
+const authSessionRateLimit = createRateLimit({
+  keyPrefix: "auth:session",
+  windowMs: 10 * 60 * 1000,
+  max: 30,
+});
+const authPasswordRateLimit = createRateLimit({
+  keyPrefix: "auth:change-password",
+  windowMs: 15 * 60 * 1000,
+  max: 6,
+  message: "Too many password attempts. Please try again later.",
+});
 
 const buildAuthResponse = (admin: Admin) => {
   const payload = {
@@ -42,6 +60,7 @@ const buildAuthResponse = (admin: Admin) => {
 
 authRouter.post(
   "/login",
+  authLoginRateLimit,
   asyncHandler(async (req, res) => {
     const payload = loginSchema.parse(req.body);
     const admin = await Admin.findOne({
@@ -79,6 +98,7 @@ authRouter.post(
 
 authRouter.post(
   "/refresh",
+  authSessionRateLimit,
   asyncHandler(async (req, res) => {
     const { refreshToken } = refreshSchema.parse(req.body);
     const storedToken = await RefreshToken.findOne({ where: { token: refreshToken } });
@@ -112,6 +132,7 @@ authRouter.post(
 
 authRouter.post(
   "/logout",
+  authSessionRateLimit,
   asyncHandler(async (req, res) => {
     const { refreshToken } = logoutSchema.parse(req.body);
     const storedToken = await RefreshToken.findOne({ where: { token: refreshToken } });
@@ -191,6 +212,7 @@ authRouter.patch(
 authRouter.patch(
   "/change-password",
   requireAdmin,
+  authPasswordRateLimit,
   asyncHandler(async (req, res) => {
     const payload = changePasswordSchema.parse(req.body);
     const admin = await Admin.findByPk(req.admin!.id);

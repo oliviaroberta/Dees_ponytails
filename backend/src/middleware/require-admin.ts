@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { Admin } from "../models/index.js";
 import { verifyAccessToken } from "../utils/auth.js";
 import { AppError } from "../utils/app-error.js";
+import { createRateLimit } from "./rate-limit.js";
 
 declare module "express-serve-static-core" {
   interface Request {
@@ -13,8 +14,24 @@ declare module "express-serve-static-core" {
   }
 }
 
+const adminRequestRateLimit = createRateLimit({
+  keyPrefix: "admin:requests",
+  windowMs: 5 * 60 * 1000,
+  max: 240,
+  message: "Too many admin requests. Please slow down and try again shortly.",
+});
+
 export const requireAdmin = async (req: Request, _res: Response, next: NextFunction) => {
   try {
+    let rateLimitError: unknown = null;
+    adminRequestRateLimit(req, _res, (error) => {
+      rateLimitError = error;
+    });
+
+    if (rateLimitError) {
+      throw rateLimitError;
+    }
+
     const authorization = req.headers.authorization;
 
     if (!authorization?.startsWith("Bearer ")) {

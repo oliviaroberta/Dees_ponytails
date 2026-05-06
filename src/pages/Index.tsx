@@ -13,12 +13,11 @@ import backgroundImage from "@/assets/background.jpg";
 const Index = () => {
   return (
     <div
-      className="relative min-h-screen"
+      className="relative min-h-screen bg-scroll lg:bg-fixed"
       style={{
         backgroundImage: `url(${backgroundImage})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
-        backgroundAttachment: "fixed",
       }}
     >
       <div className="absolute inset-0 bg-background/70" />

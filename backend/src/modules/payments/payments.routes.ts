@@ -10,8 +10,21 @@ import { initializePaymentSchema } from "./payments.schemas.js";
 import { sequelize } from "../../lib/sequelize.js";
 import { syncOrderStockForTransition } from "../../utils/order-stock.js";
 import { getDeliveryTimelineForCity } from "../../utils/delivery.js";
+import { createRateLimit } from "../../middleware/rate-limit.js";
+import { paymentJobQueue } from "../../utils/job-queue.js";
 
 const paymentsRouter = Router();
+const paymentInitRateLimit = createRateLimit({
+  keyPrefix: "payments:initialize",
+  windowMs: 5 * 60 * 1000,
+  max: 12,
+  message: "Too many payment attempts. Please wait a moment and try again.",
+});
+const paymentVerifyRateLimit = createRateLimit({
+  keyPrefix: "payments:verify",
+  windowMs: 5 * 60 * 1000,
+  max: 30,
+});
 
 const PAYSTACK_BASE_URL = "https://api.paystack.co";
 
@@ -115,6 +128,7 @@ const finalizePaidOrder = async (reference: string) => {
 
 paymentsRouter.post(
   "/initialize",
+  paymentInitRateLimit,
   asyncHandler(async (req, res) => {
     const payload = initializePaymentSchema.parse(req.body);
     const preparedItems = await prepareCheckoutItems(payload.items);
@@ -193,6 +207,7 @@ paymentsRouter.post(
 
 paymentsRouter.get(
   "/verify/:reference",
+  paymentVerifyRateLimit,
   asyncHandler(async (req, res) => {
     const reference = Array.isArray(req.params.reference)
       ? req.params.reference[0]
@@ -266,10 +281,12 @@ paymentsRouter.post(
     };
 
     if (event.event === "charge.success" && event.data?.reference && event.data.status === "success") {
-      await finalizePaidOrder(event.data.reference);
+      paymentJobQueue.enqueue(`paystack:charge-success:${event.data.reference}`, async () => {
+        await finalizePaidOrder(event.data!.reference!);
+      });
     }
 
-    res.json({ received: true });
+    res.status(202).json({ received: true });
   }),
 );
 

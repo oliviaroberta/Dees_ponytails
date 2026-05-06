@@ -13,6 +13,10 @@ const envSchema = z.object({
   ADMIN_PASSWORD: z.string().min(8),
   FRONTEND_URL: z.string().url().default("http://localhost:8080"),
   PAYSTACK_SECRET_KEY: z.string().min(10).optional(),
+  CLOUDINARY_CLOUD_NAME: z.string().min(1).optional(),
+  CLOUDINARY_API_KEY: z.string().min(1).optional(),
+  CLOUDINARY_API_SECRET: z.string().min(1).optional(),
+  CLOUDINARY_UPLOAD_FOLDER: z.string().min(1).optional(),
   PGSSL: z
     .union([z.literal("true"), z.literal("false")])
     .optional()

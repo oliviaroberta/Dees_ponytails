@@ -3,10 +3,18 @@ import path from "node:path";
 import { Router } from "express";
 import multer from "multer";
 import { requireAdmin } from "../../middleware/require-admin.js";
+import { createRateLimit } from "../../middleware/rate-limit.js";
 import { AppError } from "../../utils/app-error.js";
+import { isCloudinaryConfigured, uploadImageToCloudinary } from "../../utils/cloudinary.js";
 
 const uploadsRouter = Router();
 const uploadDir = path.join(process.cwd(), "uploads", "products");
+const adminUploadRateLimit = createRateLimit({
+  keyPrefix: "uploads:product-image",
+  windowMs: 10 * 60 * 1000,
+  max: 20,
+  message: "Too many image uploads. Please wait a moment and try again.",
+});
 
 fs.mkdirSync(uploadDir, { recursive: true });
 
@@ -45,13 +53,29 @@ const upload = multer({
 uploadsRouter.post(
   "/product-image",
   requireAdmin,
+  adminUploadRateLimit,
   upload.single("image"),
-  (req, res) => {
+  async (req, res) => {
     if (!req.file) {
       throw new AppError("Image file is required", 400);
     }
 
-    const imageUrl = `/uploads/products/${req.file.filename}`;
+    const localFilePath = path.join(uploadDir, req.file.filename);
+    const imageUrl = isCloudinaryConfigured()
+      ? await uploadImageToCloudinary({
+          buffer: fs.readFileSync(localFilePath),
+          mimeType: req.file.mimetype,
+          fileName: req.file.filename,
+        })
+      : `/uploads/products/${req.file.filename}`;
+
+    if (isCloudinaryConfigured()) {
+      try {
+        fs.unlinkSync(localFilePath);
+      } catch {
+        // Ignore cleanup errors after a successful cloud upload.
+      }
+    }
 
     res.status(201).json({
       message: "Image uploaded successfully",

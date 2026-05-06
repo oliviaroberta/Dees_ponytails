@@ -171,7 +171,15 @@ Product.init(
     createdAt: DataTypes.DATE,
     updatedAt: DataTypes.DATE,
   },
-  { sequelize, tableName: "products" },
+  {
+    sequelize,
+    tableName: "products",
+    indexes: [
+      { fields: ["featured", "created_at"] },
+      { fields: ["category"] },
+      { fields: ["status"] },
+    ],
+  },
 );
 
 export class Order extends Model<InferAttributes<Order>, InferCreationAttributes<Order>> {
@@ -269,7 +277,16 @@ Order.init(
     createdAt: DataTypes.DATE,
     updatedAt: DataTypes.DATE,
   },
-  { sequelize, tableName: "orders" },
+  {
+    sequelize,
+    tableName: "orders",
+    indexes: [
+      { fields: ["created_at"] },
+      { fields: ["status"] },
+      { fields: ["payment_status"] },
+      { fields: ["delivery_status"] },
+    ],
+  },
 );
 
 export class OrderItem extends Model<InferAttributes<OrderItem>, InferCreationAttributes<OrderItem>> {
