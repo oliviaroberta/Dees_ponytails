@@ -8,6 +8,8 @@ const AdminProducts = () => {
   const { products, deleteProduct, isLoading, error } = useAdminProducts();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "inStock" | "outOfStock">("all");
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const filteredProducts = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -24,6 +26,27 @@ const AdminProducts = () => {
       return matchesQuery && matchesStatus;
     });
   }, [products, query, statusFilter]);
+
+  const handleDelete = async (productId: string) => {
+    const confirmed = window.confirm("Delete this product from the store?");
+
+    if (!confirmed) {
+      return;
+    }
+
+    setActionError(null);
+    setDeletingId(productId);
+
+    try {
+      await deleteProduct(productId);
+    } catch (deleteError) {
+      setActionError(
+        deleteError instanceof Error ? deleteError.message : "Failed to delete product",
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   return (
     <AdminShell
@@ -66,6 +89,12 @@ const AdminProducts = () => {
           </div>
         </div>
       </section>
+
+      {actionError ? (
+        <section className="rounded-[1.75rem] border border-destructive/30 bg-destructive/10 p-6 text-center">
+          <p className="font-body text-sm text-destructive">{actionError}</p>
+        </section>
+      ) : null}
 
       {isLoading ? (
         <section className="rounded-[1.75rem] border border-dashed border-border/70 bg-card/90 p-10 text-center backdrop-blur">
@@ -143,11 +172,12 @@ const AdminProducts = () => {
                     </Link>
                     <button
                       type="button"
-                      onClick={() => void deleteProduct(product.id)}
+                      onClick={() => void handleDelete(product.id)}
+                      disabled={deletingId === product.id}
                       className="inline-flex items-center gap-2 rounded-full border border-destructive/40 px-4 py-2 font-body text-xs uppercase tracking-[0.18em] text-destructive transition-colors hover:bg-destructive/10"
                     >
                       <Trash2 size={13} />
-                      Delete
+                      {deletingId === product.id ? "Deleting..." : "Delete"}
                     </button>
                   </div>
                 </div>

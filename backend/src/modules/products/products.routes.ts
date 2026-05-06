@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { Op } from "sequelize";
-import { Product } from "../../models/index.js";
+import { OrderItem, Product, Review, SaleItem } from "../../models/index.js";
 import { requireAdmin } from "../../middleware/require-admin.js";
 import { asyncHandler } from "../../utils/async-handler.js";
 import { AppError } from "../../utils/app-error.js";
@@ -229,6 +229,25 @@ productsRouter.delete(
     if (!product) {
       throw new AppError("Product not found", 404);
     }
+
+    const relatedOrderCount = await OrderItem.count({
+      where: { productId: product.id },
+    });
+
+    if (relatedOrderCount > 0) {
+      throw new AppError(
+        "This product cannot be deleted because it is already part of customer orders. Mark it out of stock instead.",
+        400,
+      );
+    }
+
+    await SaleItem.destroy({
+      where: { productId: product.id },
+    });
+
+    await Review.destroy({
+      where: { productId: product.id },
+    });
 
     await product.destroy();
 
