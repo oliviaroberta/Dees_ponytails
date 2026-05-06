@@ -105,8 +105,7 @@ const ProductForm = ({
               label="Category"
               value={values.category}
               onChange={(value) => update("category", value)}
-              required
-              hint="Choose an existing category or type a new one to create a new shop collection."
+              hint="Optional. Leave blank and the system will match an existing category from the product name if it finds one."
               listId="product-category-options"
             />
             <Field label="Texture / Style" value={values.textureStyle} onChange={(value) => update("textureStyle", value)} required />
@@ -235,7 +234,7 @@ const ProductForm = ({
 
             <div className="flex flex-wrap gap-2">
               <span className="rounded-full border border-border px-3 py-1 font-body text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-                {values.category || "Category"}
+                {values.category || "Auto-detect"}
               </span>
               <span
                 className={`rounded-full px-3 py-1 font-body text-[11px] uppercase tracking-[0.18em] ${

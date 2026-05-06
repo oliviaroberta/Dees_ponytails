@@ -25,7 +25,7 @@ const AddProduct = () => {
           initialValues={{
             name: "",
             image: "",
-            category: "Ponytail Extension",
+            category: "",
             textureStyle: "",
             length: "",
             color: "Natural Black",

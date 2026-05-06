@@ -26,6 +26,52 @@ const findProductByIdOrSlug = async (value: string) => {
   return Product.findOne({ where: { slug: value } });
 };
 
+const inferCategoryFromName = async (name: string, excludeId?: string) => {
+  const normalizedName = name.trim().toLowerCase();
+
+  if (!normalizedName) {
+    return null;
+  }
+
+  const categories = await Product.findAll({
+    attributes: ["category"],
+    where: {
+      ...(excludeId ? { id: { [Op.ne]: excludeId } } : {}),
+    },
+  });
+
+  const uniqueCategories = Array.from(
+    new Set(
+      categories
+        .map((product) => product.category.trim())
+        .filter(Boolean),
+    ),
+  ).sort((left, right) => right.length - left.length);
+
+  return (
+    uniqueCategories.find((category) => normalizedName.includes(category.toLowerCase())) ?? null
+  );
+};
+
+const resolveCategory = async ({
+  category,
+  name,
+  excludeId,
+}: {
+  category?: string;
+  name: string;
+  excludeId?: string;
+}) => {
+  const explicitCategory = category?.trim();
+
+  if (explicitCategory) {
+    return explicitCategory;
+  }
+
+  const inferredCategory = await inferCategoryFromName(name, excludeId);
+  return inferredCategory ?? "Ponytails";
+};
+
 const countOtherFeaturedProducts = async (excludeId?: string) =>
   Product.count({
     where: {
@@ -98,6 +144,7 @@ productsRouter.post(
   requireAdmin,
   asyncHandler(async (req, res) => {
     const payload = productBodySchema.parse(req.body);
+    const category = await resolveCategory({ category: payload.category, name: payload.name });
 
     const existing = await Product.findOne({ where: { slug: payload.slug } });
 
@@ -113,7 +160,10 @@ productsRouter.post(
       }
     }
 
-    const product = await Product.create(payload);
+    const product = await Product.create({
+      ...payload,
+      category,
+    });
 
     res.status(201).json({
       message: "Product created successfully",
@@ -149,7 +199,19 @@ productsRouter.patch(
       }
     }
 
-    await product.update(payload);
+    const category =
+      payload.name !== undefined || payload.category !== undefined
+        ? await resolveCategory({
+            category: payload.category,
+            name: payload.name ?? product.name,
+            excludeId: product.id,
+          })
+        : undefined;
+
+    await product.update({
+      ...payload,
+      ...(category ? { category } : {}),
+    });
 
     res.json({
       message: "Product updated successfully",

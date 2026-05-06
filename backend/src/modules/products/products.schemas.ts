@@ -11,7 +11,7 @@ export const productBodySchema = z.object({
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must use lowercase letters, numbers, and hyphens only"),
   name: z.string().trim().min(2).max(120),
   image: z.string().trim().min(1),
-  category: z.string().trim().min(2).max(80),
+  category: z.string().trim().max(80).optional().or(z.literal("")),
   textureStyle: z.string().trim().min(2).max(80),
   length: z.string().trim().min(1).max(120),
   color: z.string().trim().min(1).max(120),
