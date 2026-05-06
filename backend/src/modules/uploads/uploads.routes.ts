@@ -14,6 +14,7 @@ import {
 const uploadsRouter = Router();
 const productImageDir = path.join(process.cwd(), "uploads", "products");
 const productVideoDir = path.join(process.cwd(), "uploads", "videos");
+const shouldUseCloudinary = isCloudinaryConfigured();
 const adminUploadRateLimit = createRateLimit({
   keyPrefix: "uploads:product-media",
   windowMs: 10 * 60 * 1000,
@@ -21,8 +22,10 @@ const adminUploadRateLimit = createRateLimit({
   message: "Too many media uploads. Please wait a moment and try again.",
 });
 
-fs.mkdirSync(productImageDir, { recursive: true });
-fs.mkdirSync(productVideoDir, { recursive: true });
+if (!shouldUseCloudinary) {
+  fs.mkdirSync(productImageDir, { recursive: true });
+  fs.mkdirSync(productVideoDir, { recursive: true });
+}
 
 const buildStorage = (destinationDir: string) =>
   multer.diskStorage({
@@ -30,20 +33,27 @@ const buildStorage = (destinationDir: string) =>
       callback(null, destinationDir);
     },
     filename: (_req, file, callback) => {
-      const extension = path.extname(file.originalname).toLowerCase() || ".bin";
-      const baseName = path
-        .basename(file.originalname, extension)
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "")
-        .slice(0, 50);
-
-      callback(null, `${baseName || "product"}-${Date.now()}${extension}`);
+      callback(null, buildUploadFileName(file.originalname));
     },
   });
 
+const buildUploadStorage = (destinationDir: string) =>
+  shouldUseCloudinary ? multer.memoryStorage() : buildStorage(destinationDir);
+
+const buildUploadFileName = (originalName: string) => {
+  const extension = path.extname(originalName).toLowerCase() || ".bin";
+  const baseName = path
+    .basename(originalName, extension)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 50);
+
+  return `${baseName || "product"}-${Date.now()}${extension}`;
+};
+
 const imageUpload = multer({
-  storage: buildStorage(productImageDir),
+  storage: buildUploadStorage(productImageDir),
   limits: {
     fileSize: 5 * 1024 * 1024,
   },
@@ -58,7 +68,7 @@ const imageUpload = multer({
 });
 
 const videoUpload = multer({
-  storage: buildStorage(productVideoDir),
+  storage: buildUploadStorage(productVideoDir),
   limits: {
     fileSize: 30 * 1024 * 1024,
   },
@@ -80,6 +90,14 @@ const removeLocalFile = (filePath: string) => {
   }
 };
 
+const getUploadBuffer = (file: Express.Multer.File, localDir: string) => {
+  if (file.buffer) {
+    return file.buffer;
+  }
+
+  return fs.readFileSync(path.join(localDir, file.filename));
+};
+
 uploadsRouter.post(
   "/product-image",
   requireAdmin,
@@ -90,16 +108,17 @@ uploadsRouter.post(
       throw new AppError("Image file is required", 400);
     }
 
-    const localFilePath = path.join(productImageDir, req.file.filename);
-    const imageUrl = isCloudinaryConfigured()
+    const fileName = req.file.filename || buildUploadFileName(req.file.originalname);
+    const localFilePath = req.file.filename ? path.join(productImageDir, req.file.filename) : null;
+    const imageUrl = shouldUseCloudinary
       ? await uploadImageToCloudinary({
-          buffer: fs.readFileSync(localFilePath),
+          buffer: getUploadBuffer(req.file, productImageDir),
           mimeType: req.file.mimetype,
-          fileName: req.file.filename,
+          fileName,
         })
       : `/uploads/products/${req.file.filename}`;
 
-    if (isCloudinaryConfigured()) {
+    if (shouldUseCloudinary && localFilePath && fs.existsSync(localFilePath)) {
       removeLocalFile(localFilePath);
     }
 
@@ -121,16 +140,17 @@ uploadsRouter.post(
       throw new AppError("Video file is required", 400);
     }
 
-    const localFilePath = path.join(productVideoDir, req.file.filename);
-    const videoUrl = isCloudinaryConfigured()
+    const fileName = req.file.filename || buildUploadFileName(req.file.originalname);
+    const localFilePath = req.file.filename ? path.join(productVideoDir, req.file.filename) : null;
+    const videoUrl = shouldUseCloudinary
       ? await uploadVideoToCloudinary({
-          buffer: fs.readFileSync(localFilePath),
+          buffer: getUploadBuffer(req.file, productVideoDir),
           mimeType: req.file.mimetype,
-          fileName: req.file.filename,
+          fileName,
         })
       : `/uploads/videos/${req.file.filename}`;
 
-    if (isCloudinaryConfigured()) {
+    if (shouldUseCloudinary && localFilePath && fs.existsSync(localFilePath)) {
       removeLocalFile(localFilePath);
     }
 

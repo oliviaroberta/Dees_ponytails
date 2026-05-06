@@ -10,16 +10,13 @@ import { errorHandler } from "./middleware/error-handler.js";
 export const createApp = () => {
   const app = express();
   const normalizeOrigin = (value: string) => value.replace(/\/$/, "");
+  const isProduction = env.NODE_ENV === "production";
   const allowedOrigins = new Set(
-    [env.FRONTEND_URL, "http://localhost:8080", "http://127.0.0.1:8080"].map(normalizeOrigin),
+    [
+      env.FRONTEND_URL,
+      ...(isProduction ? [] : ["http://localhost:8080", "http://127.0.0.1:8080"]),
+    ].map(normalizeOrigin),
   );
-  const frontendHostname = (() => {
-    try {
-      return new URL(env.FRONTEND_URL).hostname;
-    } catch {
-      return "";
-    }
-  })();
   const corsMiddleware = cors({
     origin(origin, callback) {
       if (!origin) {
@@ -29,11 +26,7 @@ export const createApp = () => {
 
       const normalizedOrigin = normalizeOrigin(origin);
 
-      if (
-        allowedOrigins.has(normalizedOrigin) ||
-        normalizedOrigin === `https://${frontendHostname}` ||
-        /^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(normalizedOrigin)
-      ) {
+      if (allowedOrigins.has(normalizedOrigin)) {
         callback(null, true);
         return;
       }
