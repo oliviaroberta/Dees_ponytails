@@ -28,6 +28,13 @@ reviewsRouter.get(
 
     const reviews = await Review.findAll({
       where,
+      include: [
+        {
+          model: Product,
+          as: "product",
+          attributes: ["id", "name"],
+        },
+      ],
       order: [["createdAt", "DESC"]],
     });
 
@@ -76,6 +83,24 @@ reviewsRouter.patch(
     res.json({
       message: "Review status updated successfully",
       item: serializeReview(review),
+    });
+  }),
+);
+
+reviewsRouter.delete(
+  "/:id",
+  requireAdmin,
+  asyncHandler(async (req, res) => {
+    const review = await Review.findByPk(getRouteParam(req.params.id));
+
+    if (!review) {
+      throw new AppError("Review not found", 404);
+    }
+
+    await review.destroy();
+
+    res.json({
+      message: "Review deleted successfully",
     });
   }),
 );

@@ -1,73 +1,58 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import { useSearchParams } from "react-router-dom";
 import { useAdminProducts } from "@/context/AdminProductsContext";
 import ProductCard from "./ProductCard";
-import type { CatalogProduct } from "@/types/product";
-import { useSearchParams } from "react-router-dom";
 
-type CollectionKey = "all" | "straight" | "waves" | "curls" | "natural";
-
-const COLLECTIONS: {
-  key: CollectionKey;
-  label: string;
-  description: string;
-}[] = [
-  {
-    key: "all",
-    label: "All Ponytails",
-    description: "Browse the full Dees_ponytails collection.",
-  },
-  {
-    key: "straight",
-    label: "Straight",
-    description: "Smooth, sleek ponytails with a polished finish.",
-  },
-  {
-    key: "waves",
-    label: "Waves",
-    description: "Soft body wave styles with natural movement.",
-  },
-  {
-    key: "curls",
-    label: "Curls",
-    description: "Defined curl styles for a fuller glam look.",
-  },
-  {
-    key: "natural",
-    label: "Natural Texture",
-    description: "Textured styles that blend beautifully with natural hair.",
-  },
-];
-
-const getCollectionKey = (product: CatalogProduct): CollectionKey => {
-  const texture = (product.textureStyle ?? "").toLowerCase();
-  const name = (product.name ?? "").toLowerCase();
-
-  if (texture.includes("straight") && !texture.includes("kinky")) return "straight";
-  if (texture.includes("wave")) return "waves";
-  if (texture.includes("curl")) return "curls";
-  if (texture.includes("kinky") || name.includes("natural")) return "natural";
-
-  return "all";
-};
+const normalizeCategoryKey = (value: string) =>
+  value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 
 const ShopSection = () => {
   const { products } = useAdminProducts();
   const [searchParams] = useSearchParams();
-  const [activeCollection, setActiveCollection] = useState<CollectionKey>("all");
+  const [activeCollection, setActiveCollection] = useState("all");
   const [highlightedProductId, setHighlightedProductId] = useState<string | null>(null);
   const targetProductId = searchParams.get("product");
+
+  const categories = useMemo(() => {
+    const uniqueCategories = Array.from(
+      new Set(
+        products
+          .map((product) => product.category.trim())
+          .filter(Boolean),
+      ),
+    ).sort((left, right) => left.localeCompare(right));
+
+    return [
+      {
+        key: "all",
+        label: "All Ponytails",
+        description: "Browse the full Dees_ponytails collection.",
+      },
+      ...uniqueCategories.map((category) => ({
+        key: normalizeCategoryKey(category),
+        label: category,
+        description: `${category} styles available in the shop.`,
+      })),
+    ];
+  }, [products]);
 
   const filteredProducts = useMemo(() => {
     if (activeCollection === "all") {
       return products;
     }
 
-    return products.filter((product) => getCollectionKey(product) === activeCollection);
+    return products.filter(
+      (product) => normalizeCategoryKey(product.category) === activeCollection,
+    );
   }, [activeCollection, products]);
 
   const activeMeta =
-    COLLECTIONS.find((collection) => collection.key === activeCollection) ?? COLLECTIONS[0];
+    categories.find((collection) => collection.key === activeCollection) ?? categories[0];
 
   useEffect(() => {
     if (!targetProductId) return;
@@ -75,7 +60,7 @@ const ShopSection = () => {
     const targetProduct = products.find((product) => product.id === targetProductId);
     if (!targetProduct) return;
 
-    const targetCollection = getCollectionKey(targetProduct);
+    const targetCollection = normalizeCategoryKey(targetProduct.category) || "all";
     if (targetCollection !== activeCollection) {
       setActiveCollection(targetCollection);
       return;
@@ -116,17 +101,19 @@ const ShopSection = () => {
             Our <span className="font-semibold italic">Ponytails</span>
           </h2>
           <p className="mx-auto mt-4 max-w-2xl font-body text-sm leading-relaxed text-muted-foreground">
-            Shop by collection to find the texture and finish that suits your look faster.
+            Shop by category to find the type you are looking for faster.
           </p>
         </motion.div>
 
         <div className="mx-auto mb-10 max-w-5xl rounded-[1.75rem] border border-border/60 bg-card/80 p-4 backdrop-blur md:p-5">
           <div className="flex flex-wrap gap-3">
-            {COLLECTIONS.map((collection) => {
+            {categories.map((collection) => {
               const count =
                 collection.key === "all"
                   ? products.length
-                  : products.filter((product) => getCollectionKey(product) === collection.key).length;
+                  : products.filter(
+                      (product) => normalizeCategoryKey(product.category) === collection.key,
+                    ).length;
 
               return (
                 <button
@@ -146,7 +133,9 @@ const ShopSection = () => {
           </div>
           <div className="mt-4 px-1">
             <p className="font-display text-xl text-foreground">{activeMeta.label}</p>
-            <p className="mt-1 font-body text-sm text-muted-foreground">{activeMeta.description}</p>
+            <p className="mt-1 font-body text-sm text-muted-foreground">
+              {activeMeta.description}
+            </p>
           </div>
         </div>
 

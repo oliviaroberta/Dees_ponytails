@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { AdminProductInput } from "@/context/AdminProductsContext";
+import { useAdminProducts } from "@/context/AdminProductsContext";
 import type { ProductStatus } from "@/types/product";
 
 export interface ProductFormValues {
@@ -25,9 +26,21 @@ const ProductForm = ({
   submitLabel: string;
   onSubmit: (values: AdminProductInput, imageFile: File | null) => void | Promise<void>;
 }) => {
+  const { products } = useAdminProducts();
   const [values, setValues] = useState<ProductFormValues>(initialValues);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>("");
+  const categoryOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          products
+            .map((product) => product.category.trim())
+            .filter(Boolean),
+        ),
+      ).sort((left, right) => left.localeCompare(right)),
+    [products],
+  );
 
   const update = <K extends keyof ProductFormValues>(key: K, value: ProductFormValues[K]) => {
     setValues((current) => ({ ...current, [key]: value }));
@@ -80,7 +93,14 @@ const ProductForm = ({
 
           <div className="mt-5 grid gap-5 md:grid-cols-2">
             <Field label="Product Name" value={values.name} onChange={(value) => update("name", value)} required />
-            <Field label="Category" value={values.category} onChange={(value) => update("category", value)} required />
+            <Field
+              label="Category"
+              value={values.category}
+              onChange={(value) => update("category", value)}
+              required
+              hint="Choose an existing category or type a new one to create a new shop collection."
+              listId="product-category-options"
+            />
             <Field label="Texture / Style" value={values.textureStyle} onChange={(value) => update("textureStyle", value)} required />
             <div className="md:col-span-2">
               <label className="mb-1.5 block font-body text-xs uppercase tracking-[0.18em] text-muted-foreground">
@@ -100,6 +120,13 @@ const ProductForm = ({
               </p>
             </div>
           </div>
+          {categoryOptions.length > 0 ? (
+            <datalist id="product-category-options">
+              {categoryOptions.map((category) => (
+                <option key={category} value={category} />
+              ))}
+            </datalist>
+          ) : null}
         </section>
 
         <section className="rounded-[1.75rem] border border-border/60 bg-card/90 p-6 backdrop-blur">
@@ -248,6 +275,7 @@ const Field = ({
   required = false,
   className = "",
   hint,
+  listId,
 }: {
   label: string;
   value: string;
@@ -256,6 +284,7 @@ const Field = ({
   required?: boolean;
   className?: string;
   hint?: string;
+  listId?: string;
 }) => (
   <div className={className}>
     <label className="mb-1.5 block font-body text-xs uppercase tracking-[0.18em] text-muted-foreground">
@@ -265,6 +294,7 @@ const Field = ({
       type={type}
       required={required}
       value={value}
+      list={listId}
       onChange={(e) => onChange(e.target.value)}
       className="w-full rounded-2xl border border-border bg-background px-4 py-3 font-body text-sm text-foreground outline-none transition-colors focus:border-foreground"
     />

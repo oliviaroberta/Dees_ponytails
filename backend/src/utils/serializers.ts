@@ -58,9 +58,10 @@ export const serializeSiteContent = (entry: SiteContent) => ({
   updatedAt: entry.updatedAt,
 });
 
-export const serializeReview = (review: Review) => ({
+export const serializeReview = (review: Review & { product?: Product | null }) => ({
   id: review.id,
   productId: review.productId,
+  productName: review.product?.name ?? null,
   customerName: review.customerName,
   rating: review.rating,
   text: review.text,
