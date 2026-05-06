@@ -280,9 +280,6 @@ const RelatedProductCard = ({ product }: { product: CatalogProduct }) => {
           {product.textureStyle}
         </p>
         <h3 className="font-display text-xl font-semibold text-foreground">{product.name}</h3>
-        <p className="mt-2 font-body text-sm text-muted-foreground">
-          {product.length} | {product.color}
-        </p>
         <div className="mt-3">
           {salePrice ? (
             <p className="font-body text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
@@ -305,6 +302,9 @@ const RelatedProductCard = ({ product }: { product: CatalogProduct }) => {
               Displayed in {currency}
             </p>
           ) : null}
+        </div>
+        <div className="mt-4 inline-flex items-center gap-1 font-body text-xs uppercase tracking-[0.18em] text-muted-foreground transition-colors group-hover:text-foreground">
+          View Details
         </div>
       </div>
     </Link>

@@ -1,13 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
-import type React from "react";
-import { ShoppingBag, Eye } from "lucide-react";
+import { Eye } from "lucide-react";
 import { motion } from "framer-motion";
-import { useCart } from "@/context/CartContext";
 import { useCurrency } from "@/context/CurrencyContext";
 import { useSales } from "@/context/SalesContext";
 import type { CatalogProduct } from "@/types/product";
 import { getProductImage } from "@/lib/productImages";
-import { parseProductOptions } from "@/lib/productOptions";
 import { Link } from "react-router-dom";
 
 interface Props {
@@ -16,39 +12,10 @@ interface Props {
 }
 
 const ProductCard = ({ product, highlighted = false }: Props) => {
-  const { addItem } = useCart();
   const { formatPrice, currency } = useCurrency();
   const { getSalePrice } = useSales();
   const salePrice = getSalePrice(product.id, product.price);
   const effectivePrice = salePrice ?? product.price;
-  const lengthOptions = useMemo(() => {
-    const parsed = parseProductOptions(product.length);
-    return parsed.length > 0 ? parsed : ["Standard"];
-  }, [product.length]);
-  const colorOptions = useMemo(() => {
-    const parsed = parseProductOptions(product.color);
-    return parsed.length > 0 ? parsed : ["Natural Black"];
-  }, [product.color]);
-  const [selectedLength, setSelectedLength] = useState("");
-  const [selectedColor, setSelectedColor] = useState("");
-
-  useEffect(() => {
-    setSelectedLength(lengthOptions[0] ?? "");
-    setSelectedColor(colorOptions[0] ?? "");
-  }, [colorOptions, lengthOptions, product.id]);
-
-  const handleAdd = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    addItem({
-      id: product.id,
-      name: product.name,
-      texture: product.textureStyle,
-      color: selectedColor,
-      length: selectedLength,
-      price: effectivePrice,
-      image: getProductImage(product.name, product.image),
-    });
-  };
 
   return (
     <motion.div
@@ -107,56 +74,11 @@ const ProductCard = ({ product, highlighted = false }: Props) => {
               {product.name}
             </Link>
           </div>
-          <span
-            className={`shrink-0 rounded-full px-3 py-1 font-body text-[11px] uppercase tracking-[0.18em] ${
-              product.status === "inStock"
-                ? "bg-primary text-primary-foreground"
-                : "bg-secondary text-foreground"
-            }`}
-          >
-            {product.status === "inStock" ? "In Stock" : "Out"}
-          </span>
-        </div>
-
-        <p className="mb-4 line-clamp-2 font-body text-sm leading-relaxed text-muted-foreground">
-          {product.description}
-        </p>
-
-        <div className="mb-4 grid gap-2 sm:grid-cols-2">
-          <div className="rounded-2xl border border-border/70 bg-card/70 px-3 py-2.5">
-            <p className="font-body text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-              Length
-            </p>
-            <select
-              value={selectedLength}
-              onChange={(event) => setSelectedLength(event.target.value)}
-              className="mt-1 w-full bg-transparent font-body text-sm text-foreground outline-none"
-              aria-label={`Select length for ${product.name}`}
-            >
-              {lengthOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="rounded-2xl border border-border/70 bg-card/70 px-3 py-2.5">
-            <p className="font-body text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-              Color
-            </p>
-            <select
-              value={selectedColor}
-              onChange={(event) => setSelectedColor(event.target.value)}
-              className="mt-1 w-full bg-transparent font-body text-sm text-foreground outline-none"
-              aria-label={`Select colour for ${product.name}`}
-            >
-              {colorOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </div>
+          {salePrice ? (
+            <span className="shrink-0 rounded-full bg-accent px-3 py-1 font-body text-[11px] uppercase tracking-[0.18em] text-accent-foreground">
+              Sale
+            </span>
+          ) : null}
         </div>
 
         <div className="flex items-end justify-between gap-4">
@@ -185,19 +107,12 @@ const ProductCard = ({ product, highlighted = false }: Props) => {
           </div>
           <Link
             to={`/shop/${product.id}`}
-            className="font-body text-xs uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground"
+            className="inline-flex items-center gap-1 font-body text-xs uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground"
           >
             View Details
+            <Eye size={13} />
           </Link>
         </div>
-
-        <button
-          onClick={handleAdd}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-accent px-5 py-3 font-body text-sm tracking-wide text-accent-foreground transition-opacity hover:opacity-90"
-        >
-          <ShoppingBag size={16} />
-          Add to Cart
-        </button>
       </div>
     </motion.div>
   );
