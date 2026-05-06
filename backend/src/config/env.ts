@@ -13,6 +13,10 @@ const envSchema = z.object({
   ADMIN_PASSWORD: z.string().min(8),
   FRONTEND_URL: z.string().url().default("http://localhost:8080"),
   PAYSTACK_SECRET_KEY: z.string().min(10).optional(),
+  PGSSL: z
+    .union([z.literal("true"), z.literal("false")])
+    .optional()
+    .transform((value) => value === "true"),
 });
 
 export const env = envSchema.parse(process.env);

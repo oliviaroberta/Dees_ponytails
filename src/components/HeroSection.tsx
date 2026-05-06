@@ -7,7 +7,7 @@ import { useSiteContent } from "@/context/SiteContentContext";
 
 const slides = [hero1, hero2];
 
-const HeroSection = () => {
+const HeroSection = () => { 
   const [index, setIndex] = useState(0);
   const {
     content: { hero },
