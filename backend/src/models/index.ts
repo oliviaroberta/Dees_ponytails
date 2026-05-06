@@ -185,6 +185,8 @@ export class Order extends Model<InferAttributes<Order>, InferCreationAttributes
   declare status: CreationOptional<"PENDING" | "PAID" | "PROCESSING" | "DELIVERED" | "CANCELLED">;
   declare paymentMethod: "MOMO" | "CARD";
   declare paymentStatus: CreationOptional<"PENDING" | "SUCCESS" | "FAILED">;
+  declare deliveryTimeline: CreationOptional<"SAME_DAY" | "NEXT_DAY">;
+  declare deliveryStatus: CreationOptional<"PENDING" | "SCHEDULED" | "OUT_FOR_DELIVERY" | "DELIVERED">;
   declare subtotalAmount: number;
   declare totalAmount: number;
   declare notes: CreationOptional<string | null>;
@@ -237,6 +239,18 @@ Order.init(
       type: DataTypes.ENUM("PENDING", "SUCCESS", "FAILED"),
       allowNull: false,
       defaultValue: "PENDING",
+    },
+    deliveryTimeline: {
+      type: DataTypes.ENUM("SAME_DAY", "NEXT_DAY"),
+      allowNull: false,
+      defaultValue: "NEXT_DAY",
+      field: "delivery_timeline",
+    },
+    deliveryStatus: {
+      type: DataTypes.ENUM("PENDING", "SCHEDULED", "OUT_FOR_DELIVERY", "DELIVERED"),
+      allowNull: false,
+      defaultValue: "PENDING",
+      field: "delivery_status",
     },
     subtotalAmount: {
       type: DataTypes.DECIMAL(10, 2),

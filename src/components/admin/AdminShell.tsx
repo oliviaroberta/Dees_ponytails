@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { LayoutDashboard, Package, PlusCircle, BadgePercent, ClipboardList, MessageSquareQuote, Settings, Store, Menu, X } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import backgroundImage from "@/assets/background.jpg";
 import { useAuth } from "@/context/AuthContext";
 
@@ -93,47 +94,72 @@ const AdminShell = ({
         </header>
 
         <div className="container mx-auto px-4 py-6 lg:px-8">
-          <div className="mb-6 lg:hidden">
+          <AnimatePresence>
             {mobileMenuOpen ? (
-              <div className="mt-3 rounded-[1.5rem] border border-border/60 bg-card/95 p-3 backdrop-blur">
-                <div className="space-y-4">
-                  {navGroups.map((group) => (
-                    <div key={group}>
-                      <p className="mb-2 px-2 font-body text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
-                        {group}
-                      </p>
-                      <div className="space-y-1.5">
-                        {navItems
-                          .filter((item) => item.group === group)
-                          .map((item) => {
-                            const isActive =
-                              location.pathname === item.to ||
-                              (item.to !== "/admin" && location.pathname.startsWith(item.to));
-                            const Icon = item.icon;
+              <>
+                <motion.button
+                  type="button"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="fixed inset-0 z-30 bg-foreground/20 backdrop-blur-sm lg:hidden"
+                  aria-label="Close admin menu"
+                />
+                <motion.div
+                  initial={{ opacity: 0, y: -16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.22, ease: "easeOut" }}
+                  className="fixed inset-x-4 top-24 z-40 lg:hidden"
+                >
+                  <div className="mx-auto max-w-md rounded-[1.75rem] border border-border/60 bg-card/95 p-3 shadow-[0_18px_40px_rgba(32,24,19,0.12)] backdrop-blur-md">
+                    <div className="space-y-4">
+                      {navGroups.map((group) => (
+                        <div key={group}>
+                          <p className="mb-2 px-2 font-body text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
+                            {group}
+                          </p>
+                          <div className="space-y-1.5">
+                            {navItems
+                              .filter((item) => item.group === group)
+                              .map((item) => {
+                                const isActive =
+                                  location.pathname === item.to ||
+                                  (item.to !== "/admin" && location.pathname.startsWith(item.to));
+                                const Icon = item.icon;
 
-                            return (
-                              <Link
-                                key={item.to}
-                                to={item.to}
-                                onClick={() => setMobileMenuOpen(false)}
-                                className={`flex items-center gap-3 rounded-2xl px-4 py-3 font-body text-sm transition-colors ${
-                                  isActive
-                                    ? "bg-primary text-primary-foreground"
-                                    : "text-muted-foreground hover:bg-background hover:text-foreground"
-                                }`}
-                              >
-                                <Icon size={16} />
-                                <span>{item.label}</span>
-                              </Link>
-                            );
-                          })}
-                      </div>
+                                return (
+                                  <Link
+                                    key={item.to}
+                                    to={item.to}
+                                    onClick={() => setMobileMenuOpen(false)}
+                                    className={`flex items-center justify-between rounded-2xl px-4 py-3 font-body text-sm transition-colors ${
+                                      isActive
+                                        ? "bg-primary text-primary-foreground"
+                                        : "text-muted-foreground hover:bg-background hover:text-foreground"
+                                    }`}
+                                  >
+                                    <span className="flex items-center gap-3">
+                                      <Icon size={16} />
+                                      <span>{item.label}</span>
+                                    </span>
+                                    <span className="text-xs tracking-normal">
+                                      {isActive ? "•" : "+"}
+                                    </span>
+                                  </Link>
+                                );
+                              })}
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </div>
+                  </div>
+                </motion.div>
+              </>
             ) : null}
-          </div>
+          </AnimatePresence>
 
           <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
             <aside className="hidden h-fit rounded-[1.75rem] border border-border/60 bg-card/90 p-5 backdrop-blur lg:block">

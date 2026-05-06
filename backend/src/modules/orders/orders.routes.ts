@@ -8,6 +8,8 @@ import { serializeOrder } from "../../utils/serializers.js";
 import { orderBodySchema, orderQuerySchema, orderStatusSchema } from "./orders.schemas.js";
 import { sequelize } from "../../lib/sequelize.js";
 import { calculateSubtotalAmount, prepareCheckoutItems } from "../../utils/pricing.js";
+import { syncOrderStockForTransition } from "../../utils/order-stock.js";
+import { getDeliveryTimelineForCity } from "../../utils/delivery.js";
 
 const ordersRouter = Router();
 
@@ -28,6 +30,10 @@ ordersRouter.get(
 
     if (query.paymentStatus) {
       where.paymentStatus = query.paymentStatus;
+    }
+
+    if (query.deliveryStatus) {
+      where.deliveryStatus = query.deliveryStatus;
     }
 
     const orders = await Order.findAll({
@@ -83,6 +89,8 @@ ordersRouter.post(
           city: payload.city,
           paymentMethod: payload.paymentMethod,
           paymentStatus: "PENDING",
+          deliveryTimeline: getDeliveryTimelineForCity(payload.city),
+          deliveryStatus: "PENDING",
           status: "PENDING",
           subtotalAmount,
           totalAmount: subtotalAmount,
@@ -103,17 +111,6 @@ ordersRouter.post(
         })),
         { transaction },
       );
-
-      for (const item of sanitizedItems) {
-        const remainingStock = item.product.stock - item.quantity;
-        await item.product.update(
-          {
-            stock: remainingStock,
-            status: remainingStock > 0 ? "IN_STOCK" : "OUT_OF_STOCK",
-          },
-          { transaction },
-        );
-      }
 
       return Order.findByPk(order.id, {
         include: [{ model: OrderItem, as: "items" }],
@@ -138,20 +135,31 @@ ordersRouter.patch(
   asyncHandler(async (req, res) => {
     const id = getRouteParam(req.params.id);
     const payload = orderStatusSchema.parse(req.body);
-    const order = await Order.findOne({
-      where: {
-        [Op.or]: [{ id }, { reference: id }],
-      },
-      include: [{ model: OrderItem, as: "items" }],
-    });
+    const order = await sequelize.transaction(async (transaction) => {
+      const existingOrder = await Order.findOne({
+        where: {
+          [Op.or]: [{ id }, { reference: id }],
+        },
+        include: [{ model: OrderItem, as: "items" }],
+        transaction,
+        lock: transaction.LOCK.UPDATE,
+      });
 
-    if (!order) {
-      throw new AppError("Order not found", 404);
-    }
+      if (!existingOrder) {
+        throw new AppError("Order not found", 404);
+      }
 
-    await order.update({
-      status: payload.status ?? order.status,
-      paymentStatus: payload.paymentStatus ?? order.paymentStatus,
+      const nextState = {
+        status: payload.status ?? existingOrder.status,
+        paymentStatus: payload.paymentStatus ?? existingOrder.paymentStatus,
+        deliveryStatus: payload.deliveryStatus ?? existingOrder.deliveryStatus,
+      } as const;
+
+      await syncOrderStockForTransition(existingOrder, nextState, transaction);
+
+      await existingOrder.update(nextState, { transaction });
+
+      return existingOrder;
     });
 
     res.json({

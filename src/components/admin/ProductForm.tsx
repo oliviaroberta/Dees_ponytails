@@ -19,10 +19,12 @@ export interface ProductFormValues {
 
 const ProductForm = ({
   initialValues,
+  currentProductId,
   submitLabel,
   onSubmit,
 }: {
   initialValues: ProductFormValues;
+  currentProductId?: string;
   submitLabel: string;
   onSubmit: (values: AdminProductInput, imageFile: File | null) => void | Promise<void>;
 }) => {
@@ -41,6 +43,12 @@ const ProductForm = ({
       ).sort((left, right) => left.localeCompare(right)),
     [products],
   );
+  const featuredProductCount = useMemo(
+    () =>
+      products.filter((product) => product.featured && product.id !== currentProductId).length,
+    [currentProductId, products],
+  );
+  const featuredLimitReached = featuredProductCount >= 3;
 
   const update = <K extends keyof ProductFormValues>(key: K, value: ProductFormValues[K]) => {
     setValues((current) => ({ ...current, [key]: value }));
@@ -166,12 +174,20 @@ const ProductForm = ({
                 id="featured"
                 type="checkbox"
                 checked={values.featured}
+                disabled={featuredLimitReached && !values.featured}
                 onChange={(e) => update("featured", e.target.checked)}
                 className="h-4 w-4 rounded border-border"
               />
-              <label htmlFor="featured" className="ml-3 font-body text-sm text-foreground">
-                Mark this product as featured
-              </label>
+              <div className="ml-3">
+                <label htmlFor="featured" className="font-body text-sm text-foreground">
+                  Mark this product as featured
+                </label>
+                <p className="mt-1 font-body text-xs text-muted-foreground">
+                  {featuredLimitReached && !values.featured
+                    ? "You already have 3 featured products on the homepage."
+                    : `${Math.max(3 - featuredProductCount, 0)} of 3 featured slots available.`}
+                </p>
+              </div>
             </div>
 
             <div className="md:col-span-2">

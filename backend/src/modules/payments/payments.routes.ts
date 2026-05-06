@@ -8,6 +8,8 @@ import { serializeOrder } from "../../utils/serializers.js";
 import { calculateSubtotalAmount, prepareCheckoutItems } from "../../utils/pricing.js";
 import { initializePaymentSchema } from "./payments.schemas.js";
 import { sequelize } from "../../lib/sequelize.js";
+import { syncOrderStockForTransition } from "../../utils/order-stock.js";
+import { getDeliveryTimelineForCity } from "../../utils/delivery.js";
 
 const paymentsRouter = Router();
 
@@ -81,25 +83,14 @@ const finalizePaidOrder = async (reference: string) => {
       throw new AppError("Order not found", 404);
     }
 
-    const preparedItems = await prepareCheckoutItems(
-      (orderWithItems.items ?? []).map((item: OrderItem) => ({
-        productId: item.productId,
-        quantity: item.quantity,
-        color: item.color,
-        length: item.length,
-      })),
+    await syncOrderStockForTransition(
+      orderWithItems,
+      {
+        status: "PAID",
+        paymentStatus: "SUCCESS",
+      },
+      transaction,
     );
-
-    for (const item of preparedItems) {
-      const remainingStock = item.product.stock - item.quantity;
-      await item.product.update(
-        {
-          stock: remainingStock,
-          status: remainingStock > 0 ? "IN_STOCK" : "OUT_OF_STOCK",
-        },
-        { transaction },
-      );
-    }
 
     await order.update(
       {
@@ -139,6 +130,8 @@ paymentsRouter.post(
       city: payload.city,
       paymentMethod: payload.paymentMethod,
       paymentStatus: "PENDING",
+      deliveryTimeline: getDeliveryTimelineForCity(payload.city),
+      deliveryStatus: "PENDING",
       status: "PENDING",
       subtotalAmount,
       totalAmount: subtotalAmount,

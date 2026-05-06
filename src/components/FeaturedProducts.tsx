@@ -37,14 +37,11 @@ const FeaturedCard = ({ product, index }: { product: CatalogProduct; index: numb
               Sale
             </div>
           ) : null}
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-foreground/70 via-foreground/20 to-transparent p-3">
-            <span className="rounded-full bg-background/95 px-3 py-1 font-body text-[11px] uppercase tracking-[0.18em] text-foreground">
-              {product.category}
-            </span>
-            <span className="rounded-full bg-background/90 px-3 py-1 font-body text-[11px] uppercase tracking-[0.2em] text-foreground">
+          {!salePrice ? (
+            <div className="absolute left-3 top-3 rounded-full bg-background/95 px-3 py-1 font-body text-[11px] uppercase tracking-[0.18em] text-foreground">
               Bestseller
-            </span>
-          </div>
+            </div>
+          ) : null}
         </div>
         <div className="rounded-[1.25rem] bg-background/60 p-4">
           <p className="mb-1 font-body text-[11px] uppercase tracking-[0.24em] text-muted-foreground">

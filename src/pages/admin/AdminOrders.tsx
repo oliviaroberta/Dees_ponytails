@@ -6,6 +6,8 @@ import { useCurrency } from "@/context/CurrencyContext";
 
 type OrderStatus = "PENDING" | "PAID" | "PROCESSING" | "DELIVERED" | "CANCELLED";
 type PaymentStatus = "PENDING" | "SUCCESS" | "FAILED";
+type DeliveryStatus = "PENDING" | "SCHEDULED" | "OUT_FOR_DELIVERY" | "DELIVERED";
+type DeliveryTimeline = "SAME_DAY" | "NEXT_DAY";
 
 interface AdminOrderItem {
   id: string;
@@ -28,6 +30,8 @@ interface AdminOrder {
   status: OrderStatus;
   paymentMethod: "MOMO" | "CARD";
   paymentStatus: PaymentStatus;
+  deliveryTimeline: DeliveryTimeline;
+  deliveryStatus: DeliveryStatus;
   subtotalAmount: number;
   totalAmount: number;
   notes: string | null;
@@ -73,7 +77,7 @@ const AdminOrders = () => {
 
   const updateOrder = async (
     orderId: string,
-    updates: { status?: OrderStatus; paymentStatus?: PaymentStatus },
+    updates: { status?: OrderStatus; paymentStatus?: PaymentStatus; deliveryStatus?: DeliveryStatus },
   ) => {
     if (!accessToken) return;
 
@@ -157,6 +161,9 @@ const AdminOrders = () => {
                     <p className="mt-1 font-body text-sm text-muted-foreground">
                       {order.customerName} | {order.customerPhone} | {order.city}
                     </p>
+                    <p className="mt-1 font-body text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                      {order.deliveryTimeline === "SAME_DAY" ? "Same-day delivery" : "Next-day delivery"}
+                    </p>
                   </div>
 
                   <p className="font-body text-sm leading-relaxed text-muted-foreground">
@@ -166,11 +173,15 @@ const AdminOrders = () => {
                   <div className="flex flex-wrap gap-2">
                     <Badge label={order.status} tone="primary" />
                     <Badge label={`Payment ${order.paymentStatus}`} tone="secondary" />
+                    <Badge
+                      label={`Delivery ${order.deliveryStatus.replaceAll("_", " ")}`}
+                      tone="secondary"
+                    />
                     <Badge label={order.paymentMethod} tone="neutral" />
                   </div>
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-2 lg:w-[320px]">
+                <div className="grid gap-3 sm:grid-cols-3 lg:w-[500px]">
                   <select
                     value={order.status}
                     onChange={(event) =>
@@ -197,6 +208,21 @@ const AdminOrders = () => {
                     <option value="PENDING">Payment Pending</option>
                     <option value="SUCCESS">Payment Success</option>
                     <option value="FAILED">Payment Failed</option>
+                  </select>
+
+                  <select
+                    value={order.deliveryStatus}
+                    onChange={(event) =>
+                      void updateOrder(order.id, {
+                        deliveryStatus: event.target.value as DeliveryStatus,
+                      })
+                    }
+                    className="rounded-2xl border border-border bg-background px-4 py-3 font-body text-sm text-foreground outline-none transition-colors focus:border-foreground"
+                  >
+                    <option value="PENDING">Delivery Pending</option>
+                    <option value="SCHEDULED">Scheduled</option>
+                    <option value="OUT_FOR_DELIVERY">Out for Delivery</option>
+                    <option value="DELIVERED">Delivered</option>
                   </select>
                 </div>
               </div>

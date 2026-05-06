@@ -11,6 +11,18 @@ import { apiRequest } from "@/lib/api";
 
 type PayMethod = "momo" | "card";
 
+const getDeliveryMessage = (city: string) => {
+  const normalizedCity = city.trim().toLowerCase();
+
+  if (!normalizedCity) {
+    return "Orders within Accra are same-day. Orders outside Accra are next-day.";
+  }
+
+  return normalizedCity.includes("accra")
+    ? "Same-day delivery applies for this order within Accra."
+    : "Next-day delivery applies for this order outside Accra.";
+};
+
 const Checkout = () => {
   const { items, total } = useCart();
   const { formatPrice } = useCurrency();
@@ -33,6 +45,7 @@ const Checkout = () => {
     currency: "GHS",
     maximumFractionDigits: 0,
   }).format(total);
+  const deliveryMessage = getDeliveryMessage(form.city);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,6 +118,12 @@ const Checkout = () => {
                     <Field label="Email" type="email" required value={form.email} onChange={(v) => update("email", v)} className="sm:col-span-2" />
                     <Field label="Delivery Address" required value={form.address} onChange={(v) => update("address", v)} className="sm:col-span-2" />
                     <Field label="City / Region" required value={form.city} onChange={(v) => update("city", v)} className="sm:col-span-2" />
+                  </div>
+                  <div className="mt-4 rounded-lg border border-border/60 bg-background/70 p-4">
+                    <p className="font-body text-sm text-foreground">{deliveryMessage}</p>
+                    <p className="mt-2 font-body text-xs text-muted-foreground">
+                      Deliveries are arranged manually through Yango or Uber after payment confirmation.
+                    </p>
                   </div>
                 </section>
 
@@ -180,7 +199,7 @@ const Checkout = () => {
                   </div>
                   <div className="flex justify-between text-muted-foreground">
                     <span>Delivery</span>
-                    <span>Calculated on confirmation</span>
+                    <span>{form.city.trim() ? deliveryMessage.replace(" applies for this order", "") : "Based on your city"}</span>
                   </div>
                   <div className="flex justify-between border-t border-border pt-2 text-base font-semibold text-foreground">
                     <span>Total</span>

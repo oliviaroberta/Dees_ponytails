@@ -91,6 +91,8 @@ export const serializeOrder = (order: Order & { items?: OrderItem[] }) => ({
   status: order.status,
   paymentMethod: order.paymentMethod,
   paymentStatus: order.paymentStatus,
+  deliveryTimeline: order.deliveryTimeline,
+  deliveryStatus: order.deliveryStatus,
   subtotalAmount: parsePrice(order.subtotalAmount),
   totalAmount: parsePrice(order.totalAmount),
   notes: order.notes,

@@ -3,6 +3,7 @@ import { z } from "zod";
 export const orderQuerySchema = z.object({
   status: z.enum(["PENDING", "PAID", "PROCESSING", "DELIVERED", "CANCELLED"]).optional(),
   paymentStatus: z.enum(["PENDING", "SUCCESS", "FAILED"]).optional(),
+  deliveryStatus: z.enum(["PENDING", "SCHEDULED", "OUT_FOR_DELIVERY", "DELIVERED"]).optional(),
 });
 
 export const orderItemBodySchema = z.object({
@@ -26,4 +27,5 @@ export const orderBodySchema = z.object({
 export const orderStatusSchema = z.object({
   status: z.enum(["PENDING", "PAID", "PROCESSING", "DELIVERED", "CANCELLED"]).optional(),
   paymentStatus: z.enum(["PENDING", "SUCCESS", "FAILED"]).optional(),
-}).refine((value) => value.status || value.paymentStatus, "Status or paymentStatus is required");
+  deliveryStatus: z.enum(["PENDING", "SCHEDULED", "OUT_FOR_DELIVERY", "DELIVERED"]).optional(),
+}).refine((value) => value.status || value.paymentStatus || value.deliveryStatus, "Status, paymentStatus, or deliveryStatus is required");

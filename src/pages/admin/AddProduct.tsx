@@ -35,6 +35,7 @@ const AddProduct = () => {
             featured: false,
             status: "inStock",
           }}
+          currentProductId={undefined}
           submitLabel={isSubmitting ? "Saving..." : "Save Product"}
           onSubmit={async (values, imageFile) => {
             setError(null);

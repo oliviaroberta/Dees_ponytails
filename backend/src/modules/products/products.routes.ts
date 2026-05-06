@@ -26,6 +26,14 @@ const findProductByIdOrSlug = async (value: string) => {
   return Product.findOne({ where: { slug: value } });
 };
 
+const countOtherFeaturedProducts = async (excludeId?: string) =>
+  Product.count({
+    where: {
+      featured: true,
+      ...(excludeId ? { id: { [Op.ne]: excludeId } } : {}),
+    },
+  });
+
 productsRouter.get(
   "/",
   asyncHandler(async (req, res) => {
@@ -97,6 +105,14 @@ productsRouter.post(
       throw new AppError("A product with this slug already exists", 409);
     }
 
+    if (payload.featured) {
+      const featuredCount = await countOtherFeaturedProducts();
+
+      if (featuredCount >= 3) {
+        throw new AppError("Only 3 products can be featured on the homepage at a time", 400);
+      }
+    }
+
     const product = await Product.create(payload);
 
     res.status(201).json({
@@ -122,6 +138,14 @@ productsRouter.patch(
 
       if (existing) {
         throw new AppError("A product with this slug already exists", 409);
+      }
+    }
+
+    if (payload.featured === true && !product.featured) {
+      const featuredCount = await countOtherFeaturedProducts(product.id);
+
+      if (featuredCount >= 3) {
+        throw new AppError("Only 3 products can be featured on the homepage at a time", 400);
       }
     }
 

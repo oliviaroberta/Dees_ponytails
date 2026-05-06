@@ -10,6 +10,8 @@ const AdminDashboard = () => {
   const totalStock = products.reduce((sum, product) => sum + product.stock, 0);
   const lowStock = products.filter((product) => product.stock <= 5).length;
   const featuredCount = products.filter((product) => product.featured).length;
+  const homepageFeaturedCount = Math.min(featuredCount, 3);
+  const hiddenFeaturedCount = Math.max(featuredCount - 3, 0);
 
   return (
     <AdminShell
@@ -20,7 +22,16 @@ const AdminDashboard = () => {
         <SummaryCard label="Products" value={String(totalProducts)} hint="Products in your store" icon={Package} />
         <SummaryCard label="Total Stock" value={String(totalStock)} hint="Total units available" icon={Layers3} />
         <SummaryCard label="Low Stock" value={String(lowStock)} hint="Products at 5 or less" icon={AlertTriangle} />
-        <SummaryCard label="Featured" value={String(featuredCount)} hint="Shown as bestsellers" icon={BadgePercent} />
+        <SummaryCard
+          label="Bestsellers"
+          value={String(homepageFeaturedCount)}
+          hint={
+            hiddenFeaturedCount > 0
+              ? `${hiddenFeaturedCount} extra featured product${hiddenFeaturedCount === 1 ? "" : "s"} won't show on the homepage`
+              : "Shown on the homepage"
+          }
+          icon={BadgePercent}
+        />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">

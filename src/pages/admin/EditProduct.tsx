@@ -66,6 +66,7 @@ const EditProduct = () => {
             featured: product.featured,
             status: product.status,
           }}
+          currentProductId={product.id}
           submitLabel={isSubmitting ? "Updating..." : "Update Product"}
           onSubmit={async (values, imageFile) => {
             setError(null);
