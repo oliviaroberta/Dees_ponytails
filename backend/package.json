@@ -9,8 +9,10 @@
     "start": "node dist/server.js",
     "db:sync": "tsx src/scripts/sync-db.ts",
     "db:seed": "tsx src/scripts/seed.ts",
+    "db:clear": "tsx src/scripts/clear-db.ts",
     "db:sync:prod": "node dist/scripts/sync-db.js",
-    "db:seed:prod": "node dist/scripts/seed.js"
+    "db:seed:prod": "node dist/scripts/seed.js",
+    "db:clear:prod": "node dist/scripts/clear-db.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

@@ -1,6 +1,6 @@
-import { Suspense, lazy, useEffect, useRef } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -51,39 +51,13 @@ const RouteLoader = () => (
 );
 
 const AppNavigationController = () => {
-  const navigate = useNavigate();
   const { pathname, search } = useLocation();
-  const hasHandledReload = useRef(false);
 
   useEffect(() => {
     if ("scrollRestoration" in window.history) {
       window.history.scrollRestoration = "manual";
     }
-
-    if (hasHandledReload.current) {
-      return;
-    }
-
-    const navigationEntry = performance.getEntriesByType("navigation")[0] as
-      | PerformanceNavigationTiming
-      | undefined;
-
-    if (navigationEntry?.type !== "reload") {
-      hasHandledReload.current = true;
-      return;
-    }
-
-    hasHandledReload.current = true;
-
-    if (pathname.startsWith("/admin") && pathname !== "/admin" && pathname !== "/admin/login") {
-      navigate("/admin", { replace: true });
-      return;
-    }
-
-    if (!pathname.startsWith("/admin") && pathname !== "/") {
-      navigate("/", { replace: true });
-    }
-  }, [navigate, pathname]);
+  }, []);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
