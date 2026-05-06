@@ -96,6 +96,7 @@ export class Product extends Model<InferAttributes<Product>, InferCreationAttrib
   declare slug: string;
   declare name: string;
   declare image: string;
+  declare video: CreationOptional<string | null>;
   declare category: string;
   declare textureStyle: string;
   declare length: string;
@@ -128,6 +129,10 @@ Product.init(
     image: {
       type: DataTypes.TEXT,
       allowNull: false,
+    },
+    video: {
+      type: DataTypes.TEXT,
+      allowNull: true,
     },
     category: {
       type: DataTypes.STRING,
@@ -486,6 +491,72 @@ export class Review extends Model<InferAttributes<Review>, InferCreationAttribut
   declare updatedAt: CreationOptional<Date>;
 }
 
+export class GalleryItem extends Model<
+  InferAttributes<GalleryItem>,
+  InferCreationAttributes<GalleryItem>
+> {
+  declare id: CreationOptional<string>;
+  declare mediaType: "IMAGE" | "VIDEO";
+  declare mediaUrl: string;
+  declare customerName: CreationOptional<string | null>;
+  declare caption: CreationOptional<string | null>;
+  declare isPublished: CreationOptional<boolean>;
+  declare sortOrder: CreationOptional<number>;
+  declare createdAt: CreationOptional<Date>;
+  declare updatedAt: CreationOptional<Date>;
+}
+
+GalleryItem.init(
+  {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
+    },
+    mediaType: {
+      type: DataTypes.ENUM("IMAGE", "VIDEO"),
+      allowNull: false,
+      field: "media_type",
+    },
+    mediaUrl: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+      field: "media_url",
+    },
+    customerName: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      field: "customer_name",
+    },
+    caption: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    isPublished: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: true,
+      field: "is_published",
+    },
+    sortOrder: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+      field: "sort_order",
+    },
+    createdAt: DataTypes.DATE,
+    updatedAt: DataTypes.DATE,
+  },
+  {
+    sequelize,
+    tableName: "gallery_items",
+    indexes: [
+      { fields: ["is_published", "sort_order", "created_at"] },
+      { fields: ["media_type"] },
+    ],
+  },
+);
+
 Review.init(
   {
     id: {
@@ -554,4 +625,5 @@ export const models = {
   SaleItem,
   SiteContent,
   Review,
+  GalleryItem,
 };

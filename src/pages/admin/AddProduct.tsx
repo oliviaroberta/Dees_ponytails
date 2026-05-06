@@ -6,7 +6,7 @@ import { useAdminProducts } from "@/context/AdminProductsContext";
 
 const AddProduct = () => {
   const navigate = useNavigate();
-  const { addProduct, uploadProductImage } = useAdminProducts();
+  const { addProduct, uploadProductImage, uploadProductVideo } = useAdminProducts();
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -25,6 +25,7 @@ const AddProduct = () => {
           initialValues={{
             name: "",
             image: "",
+            video: "",
             category: "",
             textureStyle: "",
             length: "",
@@ -37,7 +38,7 @@ const AddProduct = () => {
           }}
           currentProductId={undefined}
           submitLabel={isSubmitting ? "Saving..." : "Save Product"}
-          onSubmit={async (values, imageFile) => {
+          onSubmit={async (values, imageFile, videoFile) => {
             setError(null);
             setIsSubmitting(true);
             try {
@@ -46,9 +47,11 @@ const AddProduct = () => {
               }
 
               const imageUrl = await uploadProductImage(imageFile);
+              const videoUrl = videoFile ? await uploadProductVideo(videoFile) : null;
               await addProduct({
                 ...values,
                 image: imageUrl,
+                video: videoUrl,
               });
               navigate("/admin/products");
             } catch (submitError) {

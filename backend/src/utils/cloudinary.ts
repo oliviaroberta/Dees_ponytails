@@ -7,14 +7,16 @@ const CLOUDINARY_FOLDER = env.CLOUDINARY_UPLOAD_FOLDER || "dees-ponytails/produc
 export const isCloudinaryConfigured = () =>
   !!env.CLOUDINARY_CLOUD_NAME && !!env.CLOUDINARY_API_KEY && !!env.CLOUDINARY_API_SECRET;
 
-export const uploadImageToCloudinary = async ({
+const uploadToCloudinary = async ({
   buffer,
   mimeType,
   fileName,
+  resourceType,
 }: {
   buffer: Buffer;
   mimeType: string;
   fileName: string;
+  resourceType: "image" | "video";
 }) => {
   if (!isCloudinaryConfigured()) {
     throw new AppError("Cloudinary is not configured", 503);
@@ -35,7 +37,7 @@ export const uploadImageToCloudinary = async ({
   formData.append("signature", signature);
 
   const response = await fetch(
-    `https://api.cloudinary.com/v1_1/${env.CLOUDINARY_CLOUD_NAME}/image/upload`,
+    `https://api.cloudinary.com/v1_1/${env.CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`,
     {
       method: "POST",
       body: formData,
@@ -48,8 +50,20 @@ export const uploadImageToCloudinary = async ({
   };
 
   if (!response.ok || !payload.secure_url) {
-    throw new AppError(payload.error?.message || "Cloud image upload failed", 502);
+    throw new AppError(payload.error?.message || `Cloud ${resourceType} upload failed`, 502);
   }
 
   return payload.secure_url;
 };
+
+export const uploadImageToCloudinary = (payload: {
+  buffer: Buffer;
+  mimeType: string;
+  fileName: string;
+}) => uploadToCloudinary({ ...payload, resourceType: "image" });
+
+export const uploadVideoToCloudinary = (payload: {
+  buffer: Buffer;
+  mimeType: string;
+  fileName: string;
+}) => uploadToCloudinary({ ...payload, resourceType: "video" });

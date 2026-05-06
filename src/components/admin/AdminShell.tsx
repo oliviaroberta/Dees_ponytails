@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Package, PlusCircle, BadgePercent, ClipboardList, MessageSquareQuote, Settings, Store, Menu, X } from "lucide-react";
+import { LayoutDashboard, Package, PlusCircle, BadgePercent, ClipboardList, MessageSquareQuote, Settings, Store, Menu, X, Images } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import backgroundImage from "@/assets/background.jpg";
 import { useAuth } from "@/context/AuthContext";
@@ -9,6 +9,7 @@ const navItems = [
   { label: "Dashboard", to: "/admin", icon: LayoutDashboard, group: "Overview" },
   { label: "Products", to: "/admin/products", icon: Package, group: "Catalog" },
   { label: "Add Product", to: "/admin/products/new", icon: PlusCircle, group: "Catalog" },
+  { label: "Gallery", to: "/admin/gallery", icon: Images, group: "Catalog" },
   { label: "Sales", to: "/admin/sales", icon: BadgePercent, group: "Storefront" },
   { label: "Orders", to: "/admin/orders", icon: ClipboardList, group: "Operations" },
   { label: "Reviews", to: "/admin/reviews", icon: MessageSquareQuote, group: "Operations" },

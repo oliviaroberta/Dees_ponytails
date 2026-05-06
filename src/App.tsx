@@ -17,12 +17,14 @@ const Shop = lazy(() => import("./pages/Shop"));
 const ProductDetails = lazy(() => import("./pages/ProductDetails"));
 const About = lazy(() => import("./pages/About"));
 const Contact = lazy(() => import("./pages/Contact"));
+const Gallery = lazy(() => import("./pages/Gallery"));
 const Checkout = lazy(() => import("./pages/Checkout"));
 const CheckoutCallback = lazy(() => import("./pages/CheckoutCallback"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Sales = lazy(() => import("./pages/Sales"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminProducts = lazy(() => import("./pages/admin/AdminProducts"));
+const AdminGallery = lazy(() => import("./pages/admin/AdminGallery"));
 const AddProduct = lazy(() => import("./pages/admin/AddProduct"));
 const EditProduct = lazy(() => import("./pages/admin/EditProduct"));
 const AdminOrders = lazy(() => import("./pages/admin/AdminOrders"));
@@ -85,6 +87,7 @@ const App = () => (
                         <Route path="/" element={<Index />} />
                         <Route path="/shop" element={<Shop />} />
                         <Route path="/shop/:id" element={<ProductDetails />} />
+                        <Route path="/gallery" element={<Gallery />} />
                         <Route path="/sales" element={<Sales />} />
                         <Route path="/about" element={<About />} />
                         <Route path="/contact" element={<Contact />} />
@@ -93,6 +96,7 @@ const App = () => (
                         <Route path="/admin/login" element={<AdminLogin />} />
                         <Route path="/admin" element={<ProtectedAdminRoute><AdminDashboard /></ProtectedAdminRoute>} />
                         <Route path="/admin/products" element={<ProtectedAdminRoute><AdminProducts /></ProtectedAdminRoute>} />
+                        <Route path="/admin/gallery" element={<ProtectedAdminRoute><AdminGallery /></ProtectedAdminRoute>} />
                         <Route path="/admin/products/new" element={<ProtectedAdminRoute><AddProduct /></ProtectedAdminRoute>} />
                         <Route path="/admin/products/:id/edit" element={<ProtectedAdminRoute><EditProduct /></ProtectedAdminRoute>} />
                         <Route path="/admin/sales" element={<ProtectedAdminRoute><AdminSales /></ProtectedAdminRoute>} />

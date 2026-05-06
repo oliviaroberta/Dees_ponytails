@@ -140,7 +140,6 @@ ordersRouter.patch(
         where: {
           [Op.or]: [{ id }, { reference: id }],
         },
-        include: [{ model: OrderItem, as: "items" }],
         transaction,
         lock: transaction.LOCK.UPDATE,
       });
@@ -149,17 +148,27 @@ ordersRouter.patch(
         throw new AppError("Order not found", 404);
       }
 
+      const orderWithItems = await Order.findByPk(existingOrder.id, {
+        include: [{ model: OrderItem, as: "items" }],
+        transaction,
+      });
+
+      if (!orderWithItems) {
+        throw new AppError("Order not found", 404);
+      }
+
       const nextState = {
-        status: payload.status ?? existingOrder.status,
-        paymentStatus: payload.paymentStatus ?? existingOrder.paymentStatus,
-        deliveryStatus: payload.deliveryStatus ?? existingOrder.deliveryStatus,
+        status: payload.status ?? orderWithItems.status,
+        paymentStatus: payload.paymentStatus ?? orderWithItems.paymentStatus,
+        deliveryStatus: payload.deliveryStatus ?? orderWithItems.deliveryStatus,
       } as const;
 
-      await syncOrderStockForTransition(existingOrder, nextState, transaction);
+      await syncOrderStockForTransition(orderWithItems, nextState, transaction);
 
       await existingOrder.update(nextState, { transaction });
 
-      return existingOrder;
+      await orderWithItems.reload({ transaction });
+      return orderWithItems;
     });
 
     res.json({

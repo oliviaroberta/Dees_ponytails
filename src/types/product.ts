@@ -4,6 +4,7 @@ export interface CatalogProduct {
   id: string;
   name: string;
   image: string;
+  video: string | null;
   category: string;
   textureStyle: string;
   length: string;

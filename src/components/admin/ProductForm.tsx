@@ -6,6 +6,7 @@ import type { ProductStatus } from "@/types/product";
 export interface ProductFormValues {
   name: string;
   image: string;
+  video: string;
   category: string;
   textureStyle: string;
   length: string;
@@ -26,12 +27,18 @@ const ProductForm = ({
   initialValues: ProductFormValues;
   currentProductId?: string;
   submitLabel: string;
-  onSubmit: (values: AdminProductInput, imageFile: File | null) => void | Promise<void>;
+  onSubmit: (
+    values: AdminProductInput,
+    imageFile: File | null,
+    videoFile: File | null,
+  ) => void | Promise<void>;
 }) => {
   const { products } = useAdminProducts();
   const [values, setValues] = useState<ProductFormValues>(initialValues);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>("");
+  const [videoPreviewUrl, setVideoPreviewUrl] = useState<string>("");
   const categoryOptions = useMemo(
     () =>
       Array.from(
@@ -68,11 +75,26 @@ const ProductForm = ({
     };
   }, [imageFile]);
 
+  useEffect(() => {
+    if (!videoFile) {
+      setVideoPreviewUrl("");
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(videoFile);
+    setVideoPreviewUrl(objectUrl);
+
+    return () => {
+      URL.revokeObjectURL(objectUrl);
+    };
+  }, [videoFile]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     void onSubmit({
       name: values.name.trim(),
       image: values.image.trim(),
+      video: values.video.trim() || null,
       category: values.category.trim(),
       textureStyle: values.textureStyle.trim(),
       length: values.length.trim(),
@@ -82,12 +104,16 @@ const ProductForm = ({
       description: values.description.trim(),
       featured: values.featured,
       status: values.status,
-    }, imageFile);
+    }, imageFile, videoFile);
   };
 
   const previewImage = useMemo(
     () => previewUrl || values.image.trim(),
     [previewUrl, values.image],
+  );
+  const previewVideo = useMemo(
+    () => videoPreviewUrl || values.video.trim(),
+    [videoPreviewUrl, values.video],
   );
 
   return (
@@ -124,6 +150,24 @@ const ProductForm = ({
               />
               <p className="mt-1.5 font-body text-xs text-muted-foreground">
                 Upload an image from your device. {values.image ? "Leave blank to keep the current image." : "Required for new products."}
+              </p>
+            </div>
+            <div className="md:col-span-2">
+              <label className="mb-1.5 block font-body text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                Product Video
+              </label>
+              <input
+                type="file"
+                accept="video/*"
+                onChange={(event) => {
+                  const nextFile = event.target.files?.[0] ?? null;
+                  setVideoFile(nextFile);
+                }}
+                className="w-full rounded-2xl border border-border bg-background px-4 py-3 font-body text-sm text-foreground outline-none transition-colors file:mr-4 file:rounded-full file:border-0 file:bg-primary file:px-4 file:py-2 file:font-body file:text-xs file:uppercase file:tracking-[0.18em] file:text-primary-foreground focus:border-foreground"
+              />
+              <p className="mt-1.5 font-body text-xs text-muted-foreground">
+                Optional. Upload a short product video for the product details page.
+                {values.video ? " Leave blank to keep the current video." : ""}
               </p>
             </div>
           </div>
@@ -221,6 +265,21 @@ const ProductForm = ({
               </div>
             )}
           </div>
+          <div className="mt-4 overflow-hidden rounded-[1.5rem] border border-border/60 bg-background/70">
+            {previewVideo ? (
+              <video
+                src={previewVideo}
+                controls
+                muted
+                playsInline
+                className="aspect-video w-full object-cover"
+              />
+            ) : (
+              <div className="flex aspect-video items-center justify-center px-6 text-center font-body text-sm text-muted-foreground">
+                Optional product video preview will appear here.
+              </div>
+            )}
+          </div>
 
           <div className="mt-5 space-y-3">
             <div>
@@ -266,6 +325,11 @@ const ProductForm = ({
             {imageFile ? (
               <p className="font-body text-xs text-muted-foreground">
                 Selected file: {imageFile.name}
+              </p>
+            ) : null}
+            {videoFile ? (
+              <p className="font-body text-xs text-muted-foreground">
+                Selected video: {videoFile.name}
               </p>
             ) : null}
           </div>

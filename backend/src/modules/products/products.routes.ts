@@ -72,6 +72,11 @@ const resolveCategory = async ({
   return inferredCategory ?? "Ponytails";
 };
 
+const normalizeOptionalVideo = (video?: string | null) => {
+  const trimmed = video?.trim();
+  return trimmed ? trimmed : null;
+};
+
 const countOtherFeaturedProducts = async (excludeId?: string) =>
   Product.count({
     where: {
@@ -162,6 +167,7 @@ productsRouter.post(
 
     const product = await Product.create({
       ...payload,
+      video: normalizeOptionalVideo(payload.video),
       category,
     });
 
@@ -210,6 +216,7 @@ productsRouter.patch(
 
     await product.update({
       ...payload,
+      ...(payload.video !== undefined ? { video: normalizeOptionalVideo(payload.video) } : {}),
       ...(category ? { category } : {}),
     });
 

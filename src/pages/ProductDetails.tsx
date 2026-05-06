@@ -203,9 +203,22 @@ const ProductDetails = () => {
 
         <section className="mt-8 rounded-[2rem] border border-border/60 bg-card/85 p-5 backdrop-blur md:p-8 lg:p-10">
           <div className="grid gap-8 lg:grid-cols-[0.92fr_1.08fr] lg:items-start">
-            <div className="relative overflow-hidden rounded-[1.5rem] bg-secondary/35">
-              <img src={resolvedImage} alt={product.name} className="aspect-[4/5] w-full object-cover" />
-              <ProductImageBadges isOnSale={!!salePrice} isBestseller={product.featured} />
+            <div>
+              <div className="relative overflow-hidden rounded-[1.5rem] bg-secondary/35">
+                <img src={resolvedImage} alt={product.name} className="aspect-[4/5] w-full object-cover" />
+                <ProductImageBadges isOnSale={!!salePrice} isBestseller={product.featured} />
+              </div>
+              {product.video ? (
+                <div className="mt-4 overflow-hidden rounded-[1.5rem] border border-border/60 bg-background/60">
+                  <video
+                    src={product.video}
+                    controls
+                    playsInline
+                    preload="metadata"
+                    className="aspect-video w-full object-cover"
+                  />
+                </div>
+              ) : null}
             </div>
 
             <div>

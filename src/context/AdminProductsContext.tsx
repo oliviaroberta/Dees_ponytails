@@ -12,6 +12,7 @@ interface AdminProductsContextType {
   isLoading: boolean;
   error: string | null;
   uploadProductImage: (file: File) => Promise<string>;
+  uploadProductVideo: (file: File) => Promise<string>;
   addProduct: (product: CatalogProductInput) => Promise<void>;
   updateProduct: (id: string, updates: CatalogProductInput) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
@@ -24,6 +25,7 @@ interface BackendProduct {
   slug: string;
   name: string;
   image: string;
+  video: string | null;
   category: string;
   textureStyle: string;
   length: string;
@@ -63,10 +65,32 @@ const normalizeProductImage = (image: string) => {
   return trimmed;
 };
 
+const normalizeProductVideo = (video: string | null) => {
+  if (!video) {
+    return null;
+  }
+
+  const trimmed = video.trim();
+
+  if (trimmed.startsWith("/uploads/")) {
+    return `${BACKEND_BASE_URL}${trimmed}`;
+  }
+
+  if (
+    trimmed.startsWith("http://localhost:4000/uploads/") ||
+    trimmed.startsWith("https://localhost:4000/uploads/")
+  ) {
+    return trimmed.replace(/^https?:\/\/localhost:4000/, BACKEND_BASE_URL);
+  }
+
+  return trimmed;
+};
+
 const mapProduct = (product: BackendProduct): CatalogProduct => ({
   id: product.id,
   name: product.name,
   image: normalizeProductImage(product.image),
+  video: normalizeProductVideo(product.video),
   category: product.category,
   textureStyle: product.textureStyle,
   length: product.length,
@@ -169,6 +193,22 @@ export const AdminProductsProvider = ({ children }: { children: React.ReactNode 
         });
 
         return response.imageUrl;
+      },
+      uploadProductVideo: async (file) => {
+        if (!accessToken) {
+          throw new Error("Admin authentication is required");
+        }
+
+        const formData = new FormData();
+        formData.append("video", file);
+
+        const response = await apiRequest<{ videoUrl: string }>("/uploads/product-video", {
+          method: "POST",
+          token: accessToken,
+          body: formData,
+        });
+
+        return response.videoUrl;
       },
       addProduct: async (product) => {
         if (!accessToken) {

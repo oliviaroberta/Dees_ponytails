@@ -7,6 +7,7 @@ import {
   SaleCampaign,
   SaleItem,
   SiteContent,
+  GalleryItem,
 } from "../models/index.js";
 
 const parsePrice = (value: number | string) => Number(value);
@@ -16,6 +17,7 @@ export const serializeProduct = (product: Product) => ({
   slug: product.slug,
   name: product.name,
   image: product.image,
+  video: product.video,
   category: product.category,
   textureStyle: product.textureStyle,
   length: product.length,
@@ -68,6 +70,18 @@ export const serializeReview = (review: Review & { product?: Product | null }) =
   status: review.status,
   createdAt: review.createdAt,
   updatedAt: review.updatedAt,
+});
+
+export const serializeGalleryItem = (item: GalleryItem) => ({
+  id: item.id,
+  mediaType: item.mediaType,
+  mediaUrl: item.mediaUrl,
+  customerName: item.customerName,
+  caption: item.caption,
+  isPublished: item.isPublished,
+  sortOrder: item.sortOrder,
+  createdAt: item.createdAt,
+  updatedAt: item.updatedAt,
 });
 
 export const serializeOrderItem = (item: OrderItem) => ({

@@ -17,6 +17,7 @@ const Navbar = () => {
   const navLinks = [
     { label: "Home", href: "/" },
     { label: "Shop", href: "/shop" },
+    { label: "Gallery", href: "/gallery" },
     ...(isLive ? [{ label: "Sales", href: "/sales" }] : []),
     { label: "About", href: "/about" },
     { label: "Contact", href: "/contact" },
