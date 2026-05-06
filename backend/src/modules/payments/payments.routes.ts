@@ -49,23 +49,40 @@ const paystackRequest = async <T>(path: string, options: RequestInit = {}) => {
 
 const finalizePaidOrder = async (reference: string) => {
   return sequelize.transaction(async (transaction) => {
-    const order = (await Order.findOne({
+    const order = await Order.findOne({
       where: { reference },
-      include: [{ model: OrderItem, as: "items" }],
       transaction,
       lock: transaction.LOCK.UPDATE,
-    })) as (Order & { items?: OrderItem[] }) | null;
+    });
 
     if (!order) {
       throw new AppError("Order not found", 404);
     }
 
     if (order.paymentStatus === "SUCCESS") {
-      return order;
+      const settledOrder = await Order.findByPk(order.id, {
+        include: [{ model: OrderItem, as: "items" }],
+        transaction,
+      });
+
+      if (!settledOrder) {
+        throw new AppError("Order not found", 404);
+      }
+
+      return settledOrder;
+    }
+
+    const orderWithItems = (await Order.findByPk(order.id, {
+      include: [{ model: OrderItem, as: "items" }],
+      transaction,
+    })) as (Order & { items?: OrderItem[] }) | null;
+
+    if (!orderWithItems) {
+      throw new AppError("Order not found", 404);
     }
 
     const preparedItems = await prepareCheckoutItems(
-      (order.items ?? []).map((item: OrderItem) => ({
+      (orderWithItems.items ?? []).map((item: OrderItem) => ({
         productId: item.productId,
         quantity: item.quantity,
         color: item.color,
@@ -92,7 +109,16 @@ const finalizePaidOrder = async (reference: string) => {
       { transaction },
     );
 
-    return order;
+    const finalizedOrder = await Order.findByPk(order.id, {
+      include: [{ model: OrderItem, as: "items" }],
+      transaction,
+    });
+
+    if (!finalizedOrder) {
+      throw new AppError("Order not found", 404);
+    }
+
+    return finalizedOrder;
   });
 };
 
