@@ -5,6 +5,7 @@ import { useSales } from "@/context/SalesContext";
 import type { CatalogProduct } from "@/types/product";
 import { getProductImage } from "@/lib/productImages";
 import { Link } from "react-router-dom";
+import ProductImageBadges from "./ProductImageBadges";
 
 interface Props {
   product: CatalogProduct;
@@ -46,11 +47,7 @@ const ProductCard = ({ product, highlighted = false }: Props) => {
             <Eye size={14} /> Quick View
           </span>
         </div>
-        {salePrice ? (
-          <div className="absolute left-3 top-3 rounded-full bg-accent px-3 py-1 font-body text-[11px] uppercase tracking-[0.18em] text-accent-foreground">
-            Sale
-          </div>
-        ) : null}
+        <ProductImageBadges isOnSale={!!salePrice} isBestseller={product.featured} />
       </Link>
 
       <div className="rounded-[1.25rem] bg-background/60 p-4">

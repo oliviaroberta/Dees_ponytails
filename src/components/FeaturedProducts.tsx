@@ -6,6 +6,7 @@ import { useCurrency } from "@/context/CurrencyContext";
 import { useSales } from "@/context/SalesContext";
 import type { CatalogProduct } from "@/types/product";
 import { getProductImage } from "@/lib/productImages";
+import ProductImageBadges from "./ProductImageBadges";
 
 const FeaturedCard = ({ product, index }: { product: CatalogProduct; index: number }) => {
   const { formatPrice, currency } = useCurrency();
@@ -32,16 +33,7 @@ const FeaturedCard = ({ product, index }: { product: CatalogProduct; index: numb
             loading="lazy"
             className="aspect-square w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
-          {salePrice ? (
-            <div className="absolute left-3 top-3 rounded-full bg-accent px-3 py-1 font-body text-[11px] uppercase tracking-[0.18em] text-accent-foreground">
-              Sale
-            </div>
-          ) : null}
-          {!salePrice ? (
-            <div className="absolute left-3 top-3 rounded-full bg-background/95 px-3 py-1 font-body text-[11px] uppercase tracking-[0.18em] text-foreground">
-              Bestseller
-            </div>
-          ) : null}
+          <ProductImageBadges isOnSale={!!salePrice} isBestseller={product.featured} />
         </div>
         <div className="rounded-[1.25rem] bg-background/60 p-4">
           <p className="mb-1 font-body text-[11px] uppercase tracking-[0.24em] text-muted-foreground">

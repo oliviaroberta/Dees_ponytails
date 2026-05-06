@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -36,10 +36,15 @@ const queryClient = new QueryClient();
 const AppNavigationController = () => {
   const navigate = useNavigate();
   const { pathname, search } = useLocation();
+  const hasHandledReload = useRef(false);
 
   useEffect(() => {
     if ("scrollRestoration" in window.history) {
       window.history.scrollRestoration = "manual";
+    }
+
+    if (hasHandledReload.current) {
+      return;
     }
 
     const navigationEntry = performance.getEntriesByType("navigation")[0] as
@@ -47,8 +52,11 @@ const AppNavigationController = () => {
       | undefined;
 
     if (navigationEntry?.type !== "reload") {
+      hasHandledReload.current = true;
       return;
     }
+
+    hasHandledReload.current = true;
 
     if (pathname.startsWith("/admin") && pathname !== "/admin" && pathname !== "/admin/login") {
       navigate("/admin", { replace: true });

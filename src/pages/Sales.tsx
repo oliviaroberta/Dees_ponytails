@@ -8,6 +8,7 @@ import { useAdminProducts } from "@/context/AdminProductsContext";
 import { useSales } from "@/context/SalesContext";
 import { useCurrency } from "@/context/CurrencyContext";
 import { getProductImage } from "@/lib/productImages";
+import ProductImageBadges from "@/components/ProductImageBadges";
 
 const Sales = () => {
   const { products } = useAdminProducts();
@@ -78,9 +79,7 @@ const Sales = () => {
                         alt={product.name}
                         className="aspect-[4/5] w-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
-                      <div className="absolute left-3 top-3 rounded-full bg-accent px-3 py-1 font-body text-[11px] uppercase tracking-[0.18em] text-accent-foreground">
-                        Sale
-                      </div>
+                      <ProductImageBadges isOnSale={true} isBestseller={product.featured} />
                     </div>
 
                     <p className="mb-2 font-body text-xs uppercase tracking-[0.22em] text-muted-foreground">

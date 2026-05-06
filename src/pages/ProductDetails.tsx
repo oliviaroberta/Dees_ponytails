@@ -15,6 +15,7 @@ import { getProductImage } from "@/lib/productImages";
 import { parseProductOptions } from "@/lib/productOptions";
 import type { CatalogProduct } from "@/types/product";
 import type { StoreReview } from "@/types/review";
+import ProductImageBadges from "@/components/ProductImageBadges";
 
 const ProductDetails = () => {
   const { id = "" } = useParams();
@@ -204,11 +205,7 @@ const ProductDetails = () => {
           <div className="grid gap-8 lg:grid-cols-[0.92fr_1.08fr] lg:items-start">
             <div className="relative overflow-hidden rounded-[1.5rem] bg-secondary/35">
               <img src={resolvedImage} alt={product.name} className="aspect-[4/5] w-full object-cover" />
-              {salePrice ? (
-                <div className="absolute left-4 top-4 rounded-full bg-accent px-3 py-1 font-body text-[11px] uppercase tracking-[0.18em] text-accent-foreground">
-                  Sale
-                </div>
-              ) : null}
+              <ProductImageBadges isOnSale={!!salePrice} isBestseller={product.featured} />
             </div>
 
             <div>
@@ -455,19 +452,7 @@ const RelatedProductCard = ({ product }: { product: CatalogProduct }) => {
           alt={product.name}
           className="aspect-square w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
-        {salePrice ? (
-          <div className="absolute left-3 top-3 rounded-full bg-accent px-3 py-1 font-body text-[11px] uppercase tracking-[0.18em] text-accent-foreground">
-            Sale
-          </div>
-        ) : null}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-foreground/70 via-foreground/20 to-transparent p-3">
-          <span className="rounded-full bg-background/95 px-3 py-1 font-body text-[11px] uppercase tracking-[0.18em] text-foreground">
-            {product.category}
-          </span>
-          <span className="rounded-full bg-background/90 px-3 py-1 font-body text-[11px] uppercase tracking-[0.2em] text-foreground">
-            {product.textureStyle}
-          </span>
-        </div>
+        <ProductImageBadges isOnSale={!!salePrice} isBestseller={product.featured} />
       </div>
 
       <div className="rounded-[1.25rem] bg-card/55 p-4">
