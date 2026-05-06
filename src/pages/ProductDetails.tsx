@@ -10,10 +10,11 @@ import { useAdminProducts } from "@/context/AdminProductsContext";
 import { useCart } from "@/context/CartContext";
 import { useCurrency } from "@/context/CurrencyContext";
 import { useSales } from "@/context/SalesContext";
-import { getProductReviews } from "@/data/productReviews";
+import { apiRequest } from "@/lib/api";
 import { getProductImage } from "@/lib/productImages";
 import { parseProductOptions } from "@/lib/productOptions";
 import type { CatalogProduct } from "@/types/product";
+import type { StoreReview } from "@/types/review";
 
 const ProductDetails = () => {
   const { id = "" } = useParams();
@@ -24,7 +25,6 @@ const ProductDetails = () => {
   const { getSalePrice } = useSales();
 
   const product = useMemo(() => products.find((item) => item.id === id) ?? null, [id, products]);
-  const reviews = useMemo(() => (product ? getProductReviews(product.name) : []), [product]);
   const relatedProducts = useMemo(() => {
     if (!product) return [];
 
@@ -61,11 +61,61 @@ const ProductDetails = () => {
 
   const [selectedLength, setSelectedLength] = useState("");
   const [selectedColor, setSelectedColor] = useState("");
+  const [reviews, setReviews] = useState<StoreReview[]>([]);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(true);
+  const [reviewForm, setReviewForm] = useState({
+    customerName: "",
+    rating: "5",
+    text: "",
+  });
+  const [reviewState, setReviewState] = useState<{
+    isSubmitting: boolean;
+    error: string | null;
+    success: string | null;
+  }>({
+    isSubmitting: false,
+    error: null,
+    success: null,
+  });
 
   useEffect(() => {
     setSelectedLength(lengthOptions[0] ?? "");
     setSelectedColor(colorOptions[0] ?? "");
   }, [lengthOptions, colorOptions, id]);
+
+  useEffect(() => {
+    if (!product) {
+      setReviews([]);
+      setIsLoadingReviews(false);
+      return;
+    }
+
+    let isMounted = true;
+    setIsLoadingReviews(true);
+
+    const loadReviews = async () => {
+      try {
+        const response = await apiRequest<{ items: StoreReview[] }>(
+          `/reviews?productId=${product.id}&status=APPROVED`,
+        );
+        if (!isMounted) return;
+        setReviews(response.items);
+      } catch {
+        if (!isMounted) return;
+        setReviews([]);
+      } finally {
+        if (isMounted) {
+          setIsLoadingReviews(false);
+        }
+      }
+    };
+
+    void loadReviews();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [product]);
 
   if (!product) {
     return (
@@ -103,6 +153,46 @@ const ProductDetails = () => {
     addCurrentItem();
     setIsOpen(false);
     navigate("/checkout");
+  };
+
+  const submitReview = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!product) return;
+
+    setReviewState({
+      isSubmitting: true,
+      error: null,
+      success: null,
+    });
+
+    try {
+      await apiRequest<{ message: string }>("/reviews", {
+        method: "POST",
+        body: JSON.stringify({
+          productId: product.id,
+          customerName: reviewForm.customerName,
+          rating: Number(reviewForm.rating),
+          text: reviewForm.text,
+        }),
+      });
+
+      setReviewForm({
+        customerName: "",
+        rating: "5",
+        text: "",
+      });
+      setReviewState({
+        isSubmitting: false,
+        error: null,
+        success: "Review submitted successfully. It will appear after admin approval.",
+      });
+    } catch (error) {
+      setReviewState({
+        isSubmitting: false,
+        error: error instanceof Error ? error.message : "Failed to submit review",
+        success: null,
+      });
+    }
   };
 
   return (
@@ -215,23 +305,113 @@ const ProductDetails = () => {
             </h2>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2">
-            {reviews.map((review) => (
-              <div
-                key={`${product.id}-${review.name}`}
-                className="rounded-2xl border border-border/60 bg-background/60 p-5"
-              >
-                <div className="mb-3 flex gap-0.5">
-                  {Array.from({ length: review.rating }).map((_, index) => (
-                    <Star key={index} size={15} className="fill-accent text-accent" />
+          <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+            <div>
+              {isLoadingReviews ? (
+                <div className="rounded-2xl border border-border/60 bg-background/60 p-6 text-center">
+                  <p className="font-body text-sm text-muted-foreground">Loading reviews...</p>
+                </div>
+              ) : reviews.length === 0 ? (
+                <div className="rounded-2xl border border-border/60 bg-background/60 p-6 text-center">
+                  <p className="font-body text-sm text-muted-foreground">
+                    No approved reviews yet for this ponytail.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid gap-6 md:grid-cols-2">
+                  {reviews.map((review) => (
+                    <div
+                      key={review.id}
+                      className="rounded-2xl border border-border/60 bg-background/60 p-5"
+                    >
+                      <div className="mb-3 flex gap-0.5">
+                        {Array.from({ length: review.rating }).map((_, index) => (
+                          <Star key={index} size={15} className="fill-accent text-accent" />
+                        ))}
+                      </div>
+                      <p className="mb-4 font-body text-sm leading-relaxed text-foreground/85">
+                        "{review.text}"
+                      </p>
+                      <p className="font-display text-sm font-semibold text-muted-foreground">
+                        - {review.customerName}
+                      </p>
+                    </div>
                   ))}
                 </div>
-                <p className="mb-4 font-body text-sm leading-relaxed text-foreground/85">
-                  "{review.text}"
-                </p>
-                <p className="font-display text-sm font-semibold text-muted-foreground">- {review.name}</p>
+              )}
+            </div>
+
+            <form
+              onSubmit={submitReview}
+              className="rounded-2xl border border-border/60 bg-background/60 p-5"
+            >
+              <h3 className="font-display text-2xl font-semibold text-foreground">
+                Leave a Review
+              </h3>
+              <p className="mt-2 font-body text-sm text-muted-foreground">
+                Share your experience. Reviews go live after admin approval.
+              </p>
+
+              <div className="mt-5 space-y-4">
+                <ReviewField
+                  label="Your Name"
+                  value={reviewForm.customerName}
+                  onChange={(value) =>
+                    setReviewForm((current) => ({ ...current, customerName: value }))
+                  }
+                />
+                <div>
+                  <label className="mb-1.5 block font-body text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                    Rating
+                  </label>
+                  <select
+                    value={reviewForm.rating}
+                    onChange={(event) =>
+                      setReviewForm((current) => ({ ...current, rating: event.target.value }))
+                    }
+                    className="w-full rounded-2xl border border-border bg-background px-4 py-3 font-body text-sm text-foreground transition-colors focus:border-foreground focus:outline-none"
+                  >
+                    {[5, 4, 3, 2, 1].map((value) => (
+                      <option key={value} value={String(value)}>
+                        {value} Star{value === 1 ? "" : "s"}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1.5 block font-body text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                    Review
+                  </label>
+                  <textarea
+                    rows={5}
+                    value={reviewForm.text}
+                    onChange={(event) =>
+                      setReviewForm((current) => ({ ...current, text: event.target.value }))
+                    }
+                    className="w-full rounded-2xl border border-border bg-background px-4 py-3 font-body text-sm text-foreground transition-colors focus:border-foreground focus:outline-none"
+                  />
+                </div>
+
+                {reviewState.error ? (
+                  <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-3">
+                    <p className="font-body text-sm text-destructive">{reviewState.error}</p>
+                  </div>
+                ) : null}
+                {reviewState.success ? (
+                  <div className="rounded-2xl border border-primary/20 bg-primary/10 p-3">
+                    <p className="font-body text-sm text-foreground">{reviewState.success}</p>
+                  </div>
+                ) : null}
+
+                <button
+                  type="submit"
+                  disabled={reviewState.isSubmitting}
+                  className="w-full rounded bg-primary px-5 py-3 font-body text-sm uppercase tracking-[0.18em] text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+                >
+                  {reviewState.isSubmitting ? "Submitting..." : "Submit Review"}
+                </button>
               </div>
-            ))}
+            </form>
           </div>
         </section>
 
@@ -379,6 +559,27 @@ const OptionGroup = ({
         </button>
       ))}
     </div>
+  </div>
+);
+
+const ReviewField = ({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) => (
+  <div>
+    <label className="mb-1.5 block font-body text-xs uppercase tracking-[0.18em] text-muted-foreground">
+      {label}
+    </label>
+    <input
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      className="w-full rounded-2xl border border-border bg-background px-4 py-3 font-body text-sm text-foreground transition-colors focus:border-foreground focus:outline-none"
+    />
   </div>
 );
 
