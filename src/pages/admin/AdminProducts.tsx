@@ -1,8 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Search, PlusCircle, Pencil, Trash2 } from "lucide-react";
 import AdminShell from "@/components/admin/AdminShell";
 import { useAdminProducts } from "@/context/AdminProductsContext";
+import PaginationControls from "@/components/PaginationControls";
+
+const PRODUCTS_PER_PAGE = 6;
 
 const AdminProducts = () => {
   const { products, deleteProduct, isLoading, error } = useAdminProducts();
@@ -10,6 +13,7 @@ const AdminProducts = () => {
   const [statusFilter, setStatusFilter] = useState<"all" | "inStock" | "outOfStock">("all");
   const [actionError, setActionError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const filteredProducts = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -26,6 +30,25 @@ const AdminProducts = () => {
       return matchesQuery && matchesStatus;
     });
   }, [products, query, statusFilter]);
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE));
+  const paginatedProducts = useMemo(
+    () =>
+      filteredProducts.slice(
+        (currentPage - 1) * PRODUCTS_PER_PAGE,
+        currentPage * PRODUCTS_PER_PAGE,
+      ),
+    [currentPage, filteredProducts],
+  );
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [query, statusFilter]);
 
   const handleDelete = async (productId: string) => {
     const confirmed = window.confirm("Delete this product from the store?");
@@ -111,8 +134,9 @@ const AdminProducts = () => {
           </p>
         </section>
       ) : (
+        <>
         <section className="grid gap-4 xl:grid-cols-2">
-          {filteredProducts.map((product) => (
+          {paginatedProducts.map((product) => (
             <article
               key={product.id}
               className="rounded-[1.75rem] border border-border/60 bg-card/90 p-5 backdrop-blur"
@@ -185,6 +209,15 @@ const AdminProducts = () => {
             </article>
           ))}
         </section>
+        <PaginationControls
+          currentPage={currentPage}
+          totalPages={totalPages}
+          pageSize={PRODUCTS_PER_PAGE}
+          totalItems={filteredProducts.length}
+          itemLabel="product"
+          onPageChange={setCurrentPage}
+        />
+        </>
       )}
     </AdminShell>
   );

@@ -4,12 +4,16 @@ import { useSearchParams } from "react-router-dom";
 import { useAdminProducts } from "@/context/AdminProductsContext";
 import { normalizeCategoryKey } from "@/lib/strings";
 import ProductCard from "./ProductCard";
+import PaginationControls from "./PaginationControls";
+
+const PRODUCTS_PER_PAGE = 9;
 
 const ShopSection = () => {
   const { products } = useAdminProducts();
   const [searchParams] = useSearchParams();
   const [activeCollection, setActiveCollection] = useState("all");
   const [highlightedProductId, setHighlightedProductId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const targetProductId = searchParams.get("product");
 
   const categories = useMemo(() => {
@@ -47,6 +51,25 @@ const ShopSection = () => {
 
   const activeMeta =
     categories.find((collection) => collection.key === activeCollection) ?? categories[0];
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE));
+  const paginatedProducts = useMemo(
+    () =>
+      filteredProducts.slice(
+        (currentPage - 1) * PRODUCTS_PER_PAGE,
+        currentPage * PRODUCTS_PER_PAGE,
+      ),
+    [currentPage, filteredProducts],
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeCollection]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   useEffect(() => {
     if (!targetProductId) return;
@@ -140,8 +163,9 @@ const ShopSection = () => {
             </p>
           </div>
         ) : (
+          <>
           <div className="grid gap-8 sm:grid-cols-2 xl:grid-cols-3">
-            {filteredProducts.map((product) => (
+            {paginatedProducts.map((product) => (
               <ProductCard
                 key={product.id}
                 product={product}
@@ -149,6 +173,15 @@ const ShopSection = () => {
               />
             ))}
           </div>
+          <PaginationControls
+            currentPage={currentPage}
+            totalPages={totalPages}
+            pageSize={PRODUCTS_PER_PAGE}
+            totalItems={filteredProducts.length}
+            itemLabel="product"
+            onPageChange={setCurrentPage}
+          />
+          </>
         )}
       </div>
     </section>

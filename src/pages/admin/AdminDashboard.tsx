@@ -1,10 +1,15 @@
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Package, AlertTriangle, Layers3, PlusCircle, BadgePercent, Settings } from "lucide-react";
 import AdminShell from "@/components/admin/AdminShell";
 import { useAdminProducts } from "@/context/AdminProductsContext";
+import PaginationControls from "@/components/PaginationControls";
+
+const DASHBOARD_PRODUCTS_PER_PAGE = 5;
 
 const AdminDashboard = () => {
   const { products } = useAdminProducts();
+  const [currentPage, setCurrentPage] = useState(1);
 
   const totalProducts = products.length;
   const totalStock = products.reduce((sum, product) => sum + product.stock, 0);
@@ -12,6 +17,21 @@ const AdminDashboard = () => {
   const featuredCount = products.filter((product) => product.featured).length;
   const homepageFeaturedCount = Math.min(featuredCount, 3);
   const hiddenFeaturedCount = Math.max(featuredCount - 3, 0);
+  const totalPages = Math.max(1, Math.ceil(products.length / DASHBOARD_PRODUCTS_PER_PAGE));
+  const recentProducts = useMemo(
+    () =>
+      products.slice(
+        (currentPage - 1) * DASHBOARD_PRODUCTS_PER_PAGE,
+        currentPage * DASHBOARD_PRODUCTS_PER_PAGE,
+      ),
+    [currentPage, products],
+  );
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   return (
     <AdminShell
@@ -66,7 +86,7 @@ const AdminDashboard = () => {
             </div>
           ) : (
             <div className="space-y-3">
-              {products.slice(0, 5).map((product) => (
+              {recentProducts.map((product) => (
                 <div
                   key={product.id}
                   className="flex flex-col gap-4 rounded-2xl border border-border/60 bg-background/60 p-4 sm:flex-row sm:items-center sm:justify-between"
@@ -90,6 +110,14 @@ const AdminDashboard = () => {
               ))}
             </div>
           )}
+          <PaginationControls
+            currentPage={currentPage}
+            totalPages={totalPages}
+            pageSize={DASHBOARD_PRODUCTS_PER_PAGE}
+            totalItems={products.length}
+            itemLabel="product"
+            onPageChange={setCurrentPage}
+          />
         </section>
 
         <section className="rounded-[1.75rem] border border-border/60 bg-card/90 p-6 backdrop-blur">

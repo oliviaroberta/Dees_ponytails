@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import CartDrawer from "@/components/CartDrawer";
@@ -9,11 +10,15 @@ import { useSales } from "@/context/SalesContext";
 import { useCurrency } from "@/context/CurrencyContext";
 import { getProductImage } from "@/lib/productImages";
 import ProductImageBadges from "@/components/ProductImageBadges";
+import PaginationControls from "@/components/PaginationControls";
+
+const SALE_PRODUCTS_PER_PAGE = 8;
 
 const Sales = () => {
   const { products } = useAdminProducts();
   const { sales, isLive } = useSales();
   const { formatPrice, currency } = useCurrency();
+  const [currentPage, setCurrentPage] = useState(1);
 
   const saleProducts = sales.saleItems
     .map((saleItem) => {
@@ -23,6 +28,25 @@ const Sales = () => {
       return { product, salePrice: saleItem.salePrice };
     })
     .filter(Boolean) as Array<{ product: (typeof products)[number]; salePrice: number }>;
+  const totalPages = Math.max(1, Math.ceil(saleProducts.length / SALE_PRODUCTS_PER_PAGE));
+  const paginatedSaleProducts = useMemo(
+    () =>
+      saleProducts.slice(
+        (currentPage - 1) * SALE_PRODUCTS_PER_PAGE,
+        currentPage * SALE_PRODUCTS_PER_PAGE,
+      ),
+    [currentPage, saleProducts],
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [sales]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   if (!isLive || saleProducts.length === 0) {
     return <Navigate to="/" replace />;
@@ -67,7 +91,7 @@ const Sales = () => {
               </div>
 
               <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-                {saleProducts.map(({ product, salePrice }) => (
+                {paginatedSaleProducts.map(({ product, salePrice }) => (
                   <Link
                     key={product.id}
                     to={`/shop/${product.id}`}
@@ -113,6 +137,14 @@ const Sales = () => {
                   </Link>
                 ))}
               </div>
+              <PaginationControls
+                currentPage={currentPage}
+                totalPages={totalPages}
+                pageSize={SALE_PRODUCTS_PER_PAGE}
+                totalItems={saleProducts.length}
+                itemLabel="sale product"
+                onPageChange={setCurrentPage}
+              />
             </div>
           </section>
         </div>

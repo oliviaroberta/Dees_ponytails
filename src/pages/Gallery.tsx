@@ -5,11 +5,15 @@ import Footer from "@/components/Footer";
 import backgroundImage from "@/assets/background.jpg";
 import { apiRequest } from "@/lib/api";
 import type { GalleryItem } from "@/types/gallery";
+import PaginationControls from "@/components/PaginationControls";
+
+const GALLERY_ITEMS_PER_PAGE = 9;
 
 const Gallery = () => {
   const [items, setItems] = useState<GalleryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<"ALL" | "IMAGE" | "VIDEO">("ALL");
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     let isMounted = true;
@@ -42,6 +46,25 @@ const Gallery = () => {
     () => (filter === "ALL" ? items : items.filter((item) => item.mediaType === filter)),
     [filter, items],
   );
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / GALLERY_ITEMS_PER_PAGE));
+  const paginatedItems = useMemo(
+    () =>
+      filteredItems.slice(
+        (currentPage - 1) * GALLERY_ITEMS_PER_PAGE,
+        currentPage * GALLERY_ITEMS_PER_PAGE,
+      ),
+    [currentPage, filteredItems],
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   return (
     <div
@@ -104,8 +127,9 @@ const Gallery = () => {
                 </p>
               </div>
             ) : (
+              <>
               <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                {filteredItems.map((item) => (
+                {paginatedItems.map((item) => (
                   <article
                     key={item.id}
                     className="overflow-hidden rounded-[1.75rem] border border-border/60 bg-card/85 backdrop-blur"
@@ -146,6 +170,15 @@ const Gallery = () => {
                   </article>
                 ))}
               </div>
+              <PaginationControls
+                currentPage={currentPage}
+                totalPages={totalPages}
+                pageSize={GALLERY_ITEMS_PER_PAGE}
+                totalItems={filteredItems.length}
+                itemLabel="gallery item"
+                onPageChange={setCurrentPage}
+              />
+              </>
             )}
           </section>
         </main>

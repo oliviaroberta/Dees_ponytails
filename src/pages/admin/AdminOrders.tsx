@@ -4,6 +4,9 @@ import { useAuth } from "@/context/AuthContext";
 import { apiRequest } from "@/lib/api";
 import { useCurrency } from "@/context/CurrencyContext";
 import type { AdminOrder, DeliveryStatus, OrderStatus, PaymentStatus } from "@/types/order";
+import PaginationControls from "@/components/PaginationControls";
+
+const ORDERS_PER_PAGE = 5;
 
 const AdminOrders = () => {
   const { accessToken } = useAuth();
@@ -12,6 +15,7 @@ const AdminOrders = () => {
   const [statusFilter, setStatusFilter] = useState<"ALL" | OrderStatus>("ALL");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const loadOrders = async () => {
     if (!accessToken) return;
@@ -40,6 +44,21 @@ const AdminOrders = () => {
     () => orders.reduce((sum, order) => sum + order.totalAmount, 0),
     [orders],
   );
+  const totalPages = Math.max(1, Math.ceil(orders.length / ORDERS_PER_PAGE));
+  const paginatedOrders = useMemo(
+    () => orders.slice((currentPage - 1) * ORDERS_PER_PAGE, currentPage * ORDERS_PER_PAGE),
+    [currentPage, orders],
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   const updateOrder = async (
     orderId: string,
@@ -112,8 +131,9 @@ const AdminOrders = () => {
           <p className="font-body text-sm text-muted-foreground">No orders found yet.</p>
         </section>
       ) : (
+        <>
         <section className="space-y-4">
-          {orders.map((order) => (
+          {paginatedOrders.map((order) => (
             <article
               key={order.id}
               className="rounded-[1.75rem] border border-border/60 bg-card/90 p-5 backdrop-blur"
@@ -227,6 +247,15 @@ const AdminOrders = () => {
             </article>
           ))}
         </section>
+        <PaginationControls
+          currentPage={currentPage}
+          totalPages={totalPages}
+          pageSize={ORDERS_PER_PAGE}
+          totalItems={orders.length}
+          itemLabel="order"
+          onPageChange={setCurrentPage}
+        />
+        </>
       )}
     </AdminShell>
   );

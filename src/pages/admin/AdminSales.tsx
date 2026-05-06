@@ -2,6 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import AdminShell from "@/components/admin/AdminShell";
 import { useAdminProducts } from "@/context/AdminProductsContext";
 import { useSales } from "@/context/SalesContext";
+import PaginationControls from "@/components/PaginationControls";
+
+const SALES_PRODUCTS_PER_PAGE = 6;
 
 const AdminSales = () => {
   const { products, isLoading: productsLoading } = useAdminProducts();
@@ -9,6 +12,7 @@ const AdminSales = () => {
   const [draft, setDraft] = useState(sales);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     setDraft(sales);
@@ -20,9 +24,24 @@ const AdminSales = () => {
   );
 
   const selectedCount = draft.saleItems.length;
+  const totalPages = Math.max(1, Math.ceil(products.length / SALES_PRODUCTS_PER_PAGE));
+  const paginatedProducts = useMemo(
+    () =>
+      products.slice(
+        (currentPage - 1) * SALES_PRODUCTS_PER_PAGE,
+        currentPage * SALES_PRODUCTS_PER_PAGE,
+      ),
+    [currentPage, products],
+  );
 
   const getSaleItem = (productId: string) =>
     draft.saleItems.find((item) => item.productId === productId);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   return (
     <AdminShell
@@ -127,7 +146,7 @@ const AdminSales = () => {
         </p>
 
         <div className="mt-6 space-y-3">
-          {products.map((product) => {
+          {paginatedProducts.map((product) => {
             const saleItem = getSaleItem(product.id);
             const selected = !!saleItem;
 
@@ -200,6 +219,14 @@ const AdminSales = () => {
             );
           })}
         </div>
+        <PaginationControls
+          currentPage={currentPage}
+          totalPages={totalPages}
+          pageSize={SALES_PRODUCTS_PER_PAGE}
+          totalItems={products.length}
+          itemLabel="product"
+          onPageChange={setCurrentPage}
+        />
       </section>
         </>
       ) : null}

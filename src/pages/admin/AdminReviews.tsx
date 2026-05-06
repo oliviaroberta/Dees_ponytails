@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import AdminShell from "@/components/admin/AdminShell";
 import { useAuth } from "@/context/AuthContext";
 import { apiRequest } from "@/lib/api";
+import PaginationControls from "@/components/PaginationControls";
 
 type ReviewStatus = "PENDING" | "APPROVED" | "REJECTED";
 
@@ -22,6 +23,7 @@ const STATUS_OPTIONS: Array<{ value: "ALL" | ReviewStatus; label: string }> = [
   { value: "APPROVED", label: "Approved" },
   { value: "REJECTED", label: "Rejected" },
 ];
+const REVIEWS_PER_PAGE = 6;
 
 const AdminReviews = () => {
   const { accessToken } = useAuth();
@@ -31,6 +33,7 @@ const AdminReviews = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyReviewId, setBusyReviewId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const loadReviews = async () => {
     setIsLoading(true);
@@ -74,6 +77,25 @@ const AdminReviews = () => {
     }),
     [reviews],
   );
+  const totalPages = Math.max(1, Math.ceil(filteredReviews.length / REVIEWS_PER_PAGE));
+  const paginatedReviews = useMemo(
+    () =>
+      filteredReviews.slice(
+        (currentPage - 1) * REVIEWS_PER_PAGE,
+        currentPage * REVIEWS_PER_PAGE,
+      ),
+    [currentPage, filteredReviews],
+  );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, statusFilter]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   const updateReviewStatus = async (reviewId: string, status: ReviewStatus) => {
     if (!accessToken) return;
@@ -168,8 +190,9 @@ const AdminReviews = () => {
           <p className="font-body text-sm text-muted-foreground">No reviews found for this filter.</p>
         </section>
       ) : (
+        <>
         <section className="space-y-4">
-          {filteredReviews.map((review) => {
+          {paginatedReviews.map((review) => {
             const isBusy = busyReviewId === review.id;
 
             return (
@@ -239,6 +262,15 @@ const AdminReviews = () => {
             );
           })}
         </section>
+        <PaginationControls
+          currentPage={currentPage}
+          totalPages={totalPages}
+          pageSize={REVIEWS_PER_PAGE}
+          totalItems={filteredReviews.length}
+          itemLabel="review"
+          onPageChange={setCurrentPage}
+        />
+        </>
       )}
     </AdminShell>
   );

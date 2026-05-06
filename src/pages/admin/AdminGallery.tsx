@@ -3,6 +3,9 @@ import AdminShell from "@/components/admin/AdminShell";
 import { apiRequest } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import type { GalleryItem } from "@/types/gallery";
+import PaginationControls from "@/components/PaginationControls";
+
+const GALLERY_ITEMS_PER_PAGE = 6;
 
 const AdminGallery = () => {
   const { accessToken } = useAuth();
@@ -11,6 +14,7 @@ const AdminGallery = () => {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [file, setFile] = useState<File | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const [form, setForm] = useState({
     customerName: "",
     caption: "",
@@ -34,6 +38,15 @@ const AdminGallery = () => {
   useEffect(() => {
     void loadItems();
   }, []);
+  const totalPages = Math.max(1, Math.ceil(items.length / GALLERY_ITEMS_PER_PAGE));
+  const paginatedItems = useMemo(
+    () =>
+      items.slice(
+        (currentPage - 1) * GALLERY_ITEMS_PER_PAGE,
+        currentPage * GALLERY_ITEMS_PER_PAGE,
+      ),
+    [currentPage, items],
+  );
 
   const previewUrl = useMemo(() => (file ? URL.createObjectURL(file) : ""), [file]);
 
@@ -44,6 +57,12 @@ const AdminGallery = () => {
       }
     };
   }, [previewUrl]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   const uploadMedia = async (selectedFile: File) => {
     if (!accessToken) {
@@ -222,7 +241,8 @@ const AdminGallery = () => {
                 <p className="font-body text-sm text-muted-foreground">No gallery items yet.</p>
               </div>
             ) : (
-              items.map((item) => (
+              <>
+              {paginatedItems.map((item) => (
                 <article
                   key={item.id}
                   className="grid gap-4 rounded-2xl border border-border/60 bg-background/60 p-4 md:grid-cols-[150px_minmax(0,1fr)]"
@@ -299,9 +319,20 @@ const AdminGallery = () => {
                     </div>
                   </div>
                 </article>
-              ))
+              ))}
+              </>
             )}
           </div>
+          {items.length > 0 ? (
+            <PaginationControls
+              currentPage={currentPage}
+              totalPages={totalPages}
+              pageSize={GALLERY_ITEMS_PER_PAGE}
+              totalItems={items.length}
+              itemLabel="gallery item"
+              onPageChange={setCurrentPage}
+            />
+          ) : null}
         </section>
       </div>
     </AdminShell>
