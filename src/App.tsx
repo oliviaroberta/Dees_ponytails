@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
+import { BrowserRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,6 +11,7 @@ import { CurrencyProvider } from "@/context/CurrencyContext";
 import { SiteContentProvider } from "@/context/SiteContentContext";
 import { SalesProvider } from "@/context/SalesContext";
 import { AuthProvider } from "@/context/AuthContext";
+import FloatingWhatsApp from "@/components/FloatingWhatsApp";
 import Index from "./pages/Index";
 import Shop from "./pages/Shop";
 import ProductDetails from "./pages/ProductDetails";
@@ -32,11 +33,35 @@ import Sales from "./pages/Sales";
 
 const queryClient = new QueryClient();
 
-const ScrollToTop = () => {
+const AppNavigationController = () => {
+  const navigate = useNavigate();
   const { pathname, search } = useLocation();
 
   useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+
+    const navigationEntry = performance.getEntriesByType("navigation")[0] as
+      | PerformanceNavigationTiming
+      | undefined;
+
+    if (navigationEntry?.type !== "reload") {
+      return;
+    }
+
+    if (pathname.startsWith("/admin") && pathname !== "/admin" && pathname !== "/admin/login") {
+      navigate("/admin", { replace: true });
+      return;
+    }
+
+    if (!pathname.startsWith("/admin") && pathname !== "/") {
+      navigate("/", { replace: true });
+    }
+  }, [navigate, pathname]);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
   }, [pathname, search]);
 
   return null;
@@ -54,7 +79,8 @@ const App = () => (
                   <AdminProductsProvider>
                     <Toaster />
                     <Sonner />
-                    <ScrollToTop />
+                    <AppNavigationController />
+                    <FloatingWhatsApp />
                     <Routes>
                       <Route path="/" element={<Index />} />
                       <Route path="/shop" element={<Shop />} />

@@ -67,8 +67,20 @@
     font-family: var(--font-body);
   }
 
+  html, body, #root {
+    min-height: 100%;
+  }
+
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
+  }
+}
+
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
   }
 }
 
@@ -78,6 +90,27 @@
   }
   .section-transparent {
     background: transparent;
+  }
+
+  .cta-lift {
+    transition:
+      transform 240ms ease,
+      box-shadow 240ms ease,
+      opacity 240ms ease,
+      background-color 240ms ease,
+      color 240ms ease;
+  }
+
+  .cta-lift:hover {
+    transform: translateY(-2px);
+  }
+
+  .animate-soft-bob {
+    animation: soft-bob 4.6s ease-in-out infinite;
+  }
+
+  .animate-soft-pulse {
+    animation: soft-pulse 2.8s ease-in-out infinite;
   }
 
   .hero-ticker-track {
@@ -126,5 +159,27 @@
 
   to {
     transform: translateX(-50%);
+  }
+}
+
+@keyframes soft-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes soft-pulse {
+  0%,
+  100% {
+    box-shadow: 0 16px 35px rgba(37, 211, 102, 0.28);
+  }
+
+  50% {
+    box-shadow: 0 18px 42px rgba(37, 211, 102, 0.42);
   }
 }

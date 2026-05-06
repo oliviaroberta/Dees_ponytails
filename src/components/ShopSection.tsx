@@ -2,14 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
 import { useAdminProducts } from "@/context/AdminProductsContext";
+import { normalizeCategoryKey } from "@/lib/strings";
 import ProductCard from "./ProductCard";
-
-const normalizeCategoryKey = (value: string) =>
-  value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
 
 const ShopSection = () => {
   const { products } = useAdminProducts();

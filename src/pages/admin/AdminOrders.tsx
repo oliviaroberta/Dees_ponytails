@@ -3,41 +3,7 @@ import AdminShell from "@/components/admin/AdminShell";
 import { useAuth } from "@/context/AuthContext";
 import { apiRequest } from "@/lib/api";
 import { useCurrency } from "@/context/CurrencyContext";
-
-type OrderStatus = "PENDING" | "PAID" | "PROCESSING" | "DELIVERED" | "CANCELLED";
-type PaymentStatus = "PENDING" | "SUCCESS" | "FAILED";
-type DeliveryStatus = "PENDING" | "SCHEDULED" | "OUT_FOR_DELIVERY" | "DELIVERED";
-type DeliveryTimeline = "SAME_DAY" | "NEXT_DAY";
-
-interface AdminOrderItem {
-  id: string;
-  productId: string;
-  productName: string;
-  quantity: number;
-  unitPrice: number;
-  color: string;
-  length: string;
-}
-
-interface AdminOrder {
-  id: string;
-  reference: string;
-  customerName: string;
-  customerPhone: string;
-  customerEmail: string | null;
-  address: string;
-  city: string;
-  status: OrderStatus;
-  paymentMethod: "MOMO" | "CARD";
-  paymentStatus: PaymentStatus;
-  deliveryTimeline: DeliveryTimeline;
-  deliveryStatus: DeliveryStatus;
-  subtotalAmount: number;
-  totalAmount: number;
-  notes: string | null;
-  items: AdminOrderItem[];
-  createdAt: string;
-}
+import type { AdminOrder, DeliveryStatus, OrderStatus, PaymentStatus } from "@/types/order";
 
 const AdminOrders = () => {
   const { accessToken } = useAuth();

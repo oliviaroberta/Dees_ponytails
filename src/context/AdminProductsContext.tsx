@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { API_BASE_URL, apiRequest } from "@/lib/api";
+import { slugify } from "@/lib/strings";
 import type { CatalogProduct, CatalogProductInput } from "@/types/product";
 import { useAuth } from "./AuthContext";
 
@@ -44,13 +45,6 @@ const toFrontendStatus = (status: BackendProduct["status"]) =>
 
 const toBackendStatus = (status: CatalogProduct["status"]) =>
   status === "inStock" ? "IN_STOCK" : "OUT_OF_STOCK";
-
-const slugify = (value: string) =>
-  value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
 
 const normalizeProductImage = (image: string) => {
   const trimmed = image.trim();

@@ -124,7 +124,7 @@ const FeaturedProducts = () => {
         <div className="text-center">
           <Link
             to="/shop"
-            className="inline-block rounded border border-foreground px-10 py-3.5 font-body text-sm uppercase tracking-wider text-foreground transition-colors hover:bg-foreground hover:text-background"
+            className="cta-lift inline-block rounded border border-foreground px-10 py-3.5 font-body text-sm uppercase tracking-wider text-foreground transition-colors hover:bg-foreground hover:text-background"
           >
             View All Ponytails
           </Link>

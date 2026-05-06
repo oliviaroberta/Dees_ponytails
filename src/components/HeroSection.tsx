@@ -63,7 +63,7 @@ const HeroSection = () => {
               </p>
               <Link
                 to="/shop"
-                className="inline-block rounded-sm bg-white px-8 py-3.5 font-body text-sm uppercase tracking-[0.22em] text-foreground transition-all hover:bg-white/92"
+                className="cta-lift inline-block rounded-sm bg-white px-8 py-3.5 font-body text-sm uppercase tracking-[0.22em] text-foreground transition-all hover:bg-white/92"
               >
                 {hero.ctaLabel}
               </Link>
