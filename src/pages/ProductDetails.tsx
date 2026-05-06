@@ -37,8 +37,14 @@ const ProductDetails = () => {
         item.category === product.category &&
         item.textureStyle !== product.textureStyle,
     );
+    const remaining = products.filter(
+      (item) =>
+        item.id !== product.id &&
+        item.textureStyle !== product.textureStyle &&
+        item.category !== product.category,
+    );
 
-    return [...sameTexture, ...sameCategory].slice(0, 3);
+    return [...sameTexture, ...sameCategory, ...remaining].slice(0, 3);
   }, [product, products]);
 
   const lengthOptions = useMemo(() => {
@@ -261,26 +267,36 @@ const RelatedProductCard = ({ product }: { product: CatalogProduct }) => {
   return (
     <Link
       to={`/shop/${product.id}`}
-      className="group overflow-hidden rounded-[1.5rem] border border-border/60 bg-background/65 transition-all duration-300 hover:-translate-y-1 hover:border-foreground/20"
+      className="group block rounded-[1.75rem] border border-border/60 bg-background/65 p-4 transition-all duration-300 hover:-translate-y-1 hover:border-foreground/20"
     >
-      <div className="relative overflow-hidden bg-secondary/35">
+      <div className="relative mb-4 overflow-hidden rounded-[1.4rem] bg-secondary/35">
         <img
           src={getProductImage(product.name, product.image)}
           alt={product.name}
-          className="aspect-[4/5] w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          className="aspect-square w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
         {salePrice ? (
           <div className="absolute left-3 top-3 rounded-full bg-accent px-3 py-1 font-body text-[11px] uppercase tracking-[0.18em] text-accent-foreground">
             Sale
           </div>
         ) : null}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-foreground/70 via-foreground/20 to-transparent p-3">
+          <span className="rounded-full bg-background/95 px-3 py-1 font-body text-[11px] uppercase tracking-[0.18em] text-foreground">
+            {product.category}
+          </span>
+          <span className="rounded-full bg-background/90 px-3 py-1 font-body text-[11px] uppercase tracking-[0.2em] text-foreground">
+            {product.textureStyle}
+          </span>
+        </div>
       </div>
-      <div className="p-4">
-        <p className="mb-2 font-body text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+
+      <div className="rounded-[1.25rem] bg-card/55 p-4">
+        <p className="mb-1 font-body text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
           {product.textureStyle}
         </p>
         <h3 className="font-display text-xl font-semibold text-foreground">{product.name}</h3>
-        <div className="mt-3">
+        <div className="mt-3 flex items-end justify-between gap-4">
+          <div>
           {salePrice ? (
             <p className="font-body text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
               Original Price
@@ -302,9 +318,10 @@ const RelatedProductCard = ({ product }: { product: CatalogProduct }) => {
               Displayed in {currency}
             </p>
           ) : null}
-        </div>
-        <div className="mt-4 inline-flex items-center gap-1 font-body text-xs uppercase tracking-[0.18em] text-muted-foreground transition-colors group-hover:text-foreground">
-          View Details
+          </div>
+          <div className="inline-flex items-center gap-1 font-body text-xs uppercase tracking-[0.18em] text-muted-foreground transition-colors group-hover:text-foreground">
+            View Details
+          </div>
         </div>
       </div>
     </Link>

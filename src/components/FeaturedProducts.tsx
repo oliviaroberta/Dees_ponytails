@@ -23,60 +23,65 @@ const FeaturedCard = ({ product, index }: { product: CatalogProduct; index: numb
     >
       <Link
         to={`/shop/${product.id}`}
-        className="block rounded-2xl border border-border/60 bg-card/80 p-3.5 backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-foreground/20 hover:shadow-[0_18px_45px_rgba(27,17,8,0.12)]"
+        className="block rounded-[1.75rem] border border-border/60 bg-card/90 p-4 backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-foreground/20 hover:shadow-[0_18px_45px_rgba(27,17,8,0.12)]"
       >
-        <div className="relative mb-4 cursor-pointer overflow-hidden rounded-xl bg-secondary/50">
+        <div className="relative mb-4 cursor-pointer overflow-hidden rounded-[1.4rem] bg-secondary/50">
           <img
             src={getProductImage(product.name, product.image)}
             alt={product.name}
             loading="lazy"
-            className="aspect-[4/5] w-full object-contain bg-background/70 p-1.5 transition-transform duration-500 group-hover:scale-105"
+            className="aspect-square w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
           {salePrice ? (
             <div className="absolute left-3 top-3 rounded-full bg-accent px-3 py-1 font-body text-[11px] uppercase tracking-[0.18em] text-accent-foreground">
               Sale
             </div>
           ) : null}
-          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-foreground/75 via-foreground/30 to-transparent px-4 pb-4 pt-10 text-background">
-            <span className="rounded-full border border-background/30 bg-background/10 px-3 py-1 font-body text-[11px] uppercase tracking-[0.22em] backdrop-blur-sm">
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-foreground/70 via-foreground/20 to-transparent p-3">
+            <span className="rounded-full bg-background/95 px-3 py-1 font-body text-[11px] uppercase tracking-[0.18em] text-foreground">
+              {product.category}
+            </span>
+            <span className="rounded-full bg-background/90 px-3 py-1 font-body text-[11px] uppercase tracking-[0.2em] text-foreground">
               Bestseller
             </span>
           </div>
         </div>
-        <h3 className="mb-1 font-display text-lg font-semibold text-foreground transition-colors group-hover:text-accent md:text-xl">
-          {product.name}
-        </h3>
-        <p className="mb-2.5 font-body text-sm text-muted-foreground">
-          {product.textureStyle} | {product.length}
-        </p>
-        <div className="flex items-center justify-between">
-          <div>
-            {salePrice ? (
-              <p className="font-body text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-                Original Price
+        <div className="rounded-[1.25rem] bg-background/60 p-4">
+          <p className="mb-1 font-body text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
+            {product.textureStyle}
+          </p>
+          <h3 className="font-display text-xl font-semibold text-foreground transition-colors group-hover:text-accent">
+            {product.name}
+          </h3>
+          <div className="mt-3 flex items-end justify-between gap-4">
+            <div>
+              {salePrice ? (
+                <p className="font-body text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                  Original Price
+                </p>
+              ) : null}
+              {salePrice ? (
+                <p className="font-body text-xs text-muted-foreground line-through">
+                  {formatPrice(product.price)}
+                </p>
+              ) : null}
+              <p className="mt-1 font-body text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                {salePrice ? "Sale Price" : "Price"}
               </p>
-            ) : null}
-            {salePrice ? (
-              <p className="font-body text-xs text-muted-foreground line-through">
-                {formatPrice(product.price)}
+              <p className={`font-display text-2xl font-semibold ${salePrice ? "text-accent" : "text-foreground"}`}>
+                {formatPrice(effectivePrice)}
               </p>
-            ) : null}
-            <p className="mt-1 font-body text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-              {salePrice ? "Sale Price" : "Price"}
-            </p>
-            <p className={`font-body text-sm ${salePrice ? "text-accent" : "text-muted-foreground"}`}>
-              {formatPrice(effectivePrice)}
-            </p>
-            {currency !== "GHS" ? (
-              <p className="mt-1 font-body text-[11px] text-muted-foreground">
-                Displayed in {currency}
-              </p>
-            ) : null}
+              {currency !== "GHS" ? (
+                <p className="mt-1 font-body text-[11px] text-muted-foreground">
+                  Displayed in {currency}
+                </p>
+              ) : null}
+            </div>
+            <span className="inline-flex items-center gap-1 font-body text-xs uppercase tracking-[0.18em] text-muted-foreground transition-colors group-hover:text-foreground">
+              View Details
+              <ArrowRight size={14} />
+            </span>
           </div>
-          <span className="inline-flex items-center gap-1 font-body text-xs uppercase tracking-[0.18em] text-foreground">
-            Tap to View
-            <ArrowRight size={14} />
-          </span>
         </div>
       </Link>
     </motion.div>
