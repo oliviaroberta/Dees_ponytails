@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { MessageCircle, Phone } from "lucide-react";
-import { ORDER_WHATSAPP_MESSAGE, WHATSAPP_NUMBER } from "@/lib/contact";
+import { INSTAGRAM_URL, ORDER_WHATSAPP_MESSAGE, TIKTOK_URL, WHATSAPP_NUMBER } from "@/lib/contact";
 
 const ContactSection = () => {
   return (
@@ -47,7 +47,7 @@ const ContactSection = () => {
 
           <div className="flex items-center justify-center gap-6">
             <a
-              href="https://instagram.com/dees_ponytails"
+              href={INSTAGRAM_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 font-body text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -68,6 +68,24 @@ const ContactSection = () => {
                 <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
               </svg>
               @dees_ponytails
+            </a>
+            <a
+              href={TIKTOK_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 font-body text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.35V2h-3.05v13.24a2.75 2.75 0 1 1-2.75-2.75c.29 0 .57.04.84.13V9.53a5.82 5.82 0 1 0 4.96 5.71V8.57a7.82 7.82 0 0 0 4.58 1.48V6.99c-.28 0-.56-.1-.81-.3Z" />
+              </svg>
+              TikTok
             </a>
             <a
               href={`https://wa.me/${WHATSAPP_NUMBER}`}
