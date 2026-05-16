@@ -35,7 +35,8 @@ npm run dev
 Optional local frontend env:
 
 ```env
-VITE_API_URL=http://localhost:4000/api
+# Optional. Leave unset to use the local /api proxy to backend:4000.
+VITE_API_URL=
 ```
 
 ## Backend
@@ -56,13 +57,15 @@ npm run dev
 ## Deployment
 
 - frontend: `Vercel`
-- backend: `Render`
-- database: `Render Postgres`
+- backend API: `Vercel Functions`
+- database: `Neon Postgres`
+- media: `Cloudinary`
 
 Production frontend env:
 
 ```env
-VITE_API_URL=https://your-backend-domain/api
+# Optional. Leave unset to use same-origin /api on Vercel.
+VITE_API_URL=/api
 ```
 
 Production backend env should include:
@@ -75,6 +78,15 @@ Production backend env should include:
 - `FRONTEND_URL`
 - `PAYSTACK_SECRET_KEY`
 - `PGSSL=true`
+
+Vercel serves the React frontend and the Express backend together. The API remains available under `/api`, and the backend uses `DATABASE_URL` for Neon Postgres.
+
+## Local Development Notes
+
+- backend still runs locally from `backend/` with `npm run dev`
+- frontend now calls `/api` by default
+- Vite proxies `/api` and `/uploads` to `http://localhost:4000` during local development
+- do not commit real `.env` files or secrets
 
 ## Status
 

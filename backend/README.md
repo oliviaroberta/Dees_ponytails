@@ -37,6 +37,8 @@ npm run db:seed
 npm run dev
 ```
 
+The frontend can run separately from the repo root with `npm run dev`. During local development, the frontend proxies `/api` and `/uploads` to `http://localhost:4000`.
+
 ## Environment Variables
 
 Required values:
@@ -52,6 +54,10 @@ Optional / deployment-specific:
 
 - `PAYSTACK_SECRET_KEY`
 - `PGSSL`
+- `CLOUDINARY_CLOUD_NAME`
+- `CLOUDINARY_API_KEY`
+- `CLOUDINARY_API_SECRET`
+- `CLOUDINARY_UPLOAD_FOLDER`
 
 ## Main Endpoints
 
@@ -109,6 +115,7 @@ Optional / deployment-specific:
 ### Uploads
 
 - `POST /api/uploads/product-image`
+- `POST /api/uploads/product-video`
 
 ## Database Scripts
 
@@ -139,5 +146,6 @@ The seed script creates:
 
 - admin-protected routes require `Authorization: Bearer <access_token>`
 - payment verification is backend-driven
-- uploaded images are currently stored on the backend filesystem
-- for real launch, move uploads to durable cloud storage
+- uploaded images/videos use Cloudinary when configured
+- local filesystem uploads are only a development fallback
+- for Vercel deployment, the Express app is exported through the repo-root `api/` function entrypoints and stays mounted under `/api`
