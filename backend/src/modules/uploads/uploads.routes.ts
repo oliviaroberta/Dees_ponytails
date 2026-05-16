@@ -4,6 +4,7 @@ import { Router } from "express";
 import multer from "multer";
 import { requireAdmin } from "../../middleware/require-admin.js";
 import { createRateLimit } from "../../middleware/rate-limit.js";
+import { asyncHandler } from "../../utils/async-handler.js";
 import { AppError } from "../../utils/app-error.js";
 import {
   isCloudinaryConfigured,
@@ -103,7 +104,7 @@ uploadsRouter.post(
   requireAdmin,
   adminUploadRateLimit,
   imageUpload.single("image"),
-  async (req, res) => {
+  asyncHandler(async (req, res) => {
     if (!req.file) {
       throw new AppError("Image file is required", 400);
     }
@@ -127,7 +128,7 @@ uploadsRouter.post(
       imageUrl,
       fileName: req.file.filename,
     });
-  },
+  }),
 );
 
 uploadsRouter.post(
@@ -135,7 +136,7 @@ uploadsRouter.post(
   requireAdmin,
   adminUploadRateLimit,
   videoUpload.single("video"),
-  async (req, res) => {
+  asyncHandler(async (req, res) => {
     if (!req.file) {
       throw new AppError("Video file is required", 400);
     }
@@ -159,7 +160,7 @@ uploadsRouter.post(
       videoUrl,
       fileName: req.file.filename,
     });
-  },
+  }),
 );
 
 export { uploadsRouter };

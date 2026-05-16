@@ -5,7 +5,12 @@ import { AppError } from "./app-error.js";
 const CLOUDINARY_FOLDER = env.CLOUDINARY_UPLOAD_FOLDER || "dees-ponytails/products";
 
 export const isCloudinaryConfigured = () =>
-  !!env.CLOUDINARY_CLOUD_NAME && !!env.CLOUDINARY_API_KEY && !!env.CLOUDINARY_API_SECRET;
+  !!env.CLOUDINARY_CLOUD_NAME &&
+  !!env.CLOUDINARY_API_KEY &&
+  !!env.CLOUDINARY_API_SECRET &&
+  env.CLOUDINARY_CLOUD_NAME !== "your_cloud_name" &&
+  env.CLOUDINARY_API_KEY !== "your_cloudinary_api_key" &&
+  env.CLOUDINARY_API_SECRET !== "your_cloudinary_api_secret";
 
 const uploadToCloudinary = async ({
   buffer,
