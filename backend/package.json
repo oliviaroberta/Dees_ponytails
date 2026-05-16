@@ -10,9 +10,11 @@
     "db:sync": "tsx src/scripts/sync-db.ts",
     "db:seed": "tsx src/scripts/seed.ts",
     "db:clear": "tsx src/scripts/clear-db.ts",
+    "admin:reset": "tsx src/scripts/reset-admin.ts",
     "db:sync:prod": "node dist/scripts/sync-db.js",
     "db:seed:prod": "node dist/scripts/seed.js",
-    "db:clear:prod": "node dist/scripts/clear-db.js"
+    "db:clear:prod": "node dist/scripts/clear-db.js",
+    "admin:reset:prod": "node dist/scripts/reset-admin.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
