@@ -1,4 +1,10 @@
 import { app } from "./_app.js";
 
-export default app;
+export const config = {
+  api: {
+    bodyParser: false,
+    externalResolver: true,
+  },
+};
 
+export default app;
