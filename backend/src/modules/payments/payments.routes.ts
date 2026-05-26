@@ -5,7 +5,11 @@ import { env } from "../../config/env.js";
 import { asyncHandler } from "../../utils/async-handler.js";
 import { AppError } from "../../utils/app-error.js";
 import { serializeOrder } from "../../utils/serializers.js";
-import { calculateSubtotalAmount, prepareCheckoutItems } from "../../utils/pricing.js";
+import {
+  calculateSubtotalAmount,
+  prepareCheckoutItems,
+  type CheckoutItemInput,
+} from "../../utils/pricing.js";
 import { initializePaymentSchema } from "./payments.schemas.js";
 import { sequelize } from "../../lib/sequelize.js";
 import { syncOrderStockForTransition } from "../../utils/order-stock.js";
@@ -131,7 +135,13 @@ paymentsRouter.post(
   paymentInitRateLimit,
   asyncHandler(async (req, res) => {
     const payload = initializePaymentSchema.parse(req.body);
-    const preparedItems = await prepareCheckoutItems(payload.items);
+    const checkoutItems: CheckoutItemInput[] = payload.items.map((item) => ({
+      productId: item.productId,
+      quantity: item.quantity,
+      color: item.color,
+      length: item.length,
+    }));
+    const preparedItems = await prepareCheckoutItems(checkoutItems);
     const subtotalAmount = calculateSubtotalAmount(preparedItems);
     const reference = generateReference();
 

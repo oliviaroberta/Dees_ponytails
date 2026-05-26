@@ -7,7 +7,11 @@ import { AppError } from "../../utils/app-error.js";
 import { serializeOrder } from "../../utils/serializers.js";
 import { orderBodySchema, orderQuerySchema, orderStatusSchema } from "./orders.schemas.js";
 import { sequelize } from "../../lib/sequelize.js";
-import { calculateSubtotalAmount, prepareCheckoutItems } from "../../utils/pricing.js";
+import {
+  calculateSubtotalAmount,
+  prepareCheckoutItems,
+  type CheckoutItemInput,
+} from "../../utils/pricing.js";
 import { syncOrderStockForTransition } from "../../utils/order-stock.js";
 import { getDeliveryTimelineForCity } from "../../utils/delivery.js";
 
@@ -75,7 +79,13 @@ ordersRouter.post(
   "/",
   asyncHandler(async (req, res) => {
     const payload = orderBodySchema.parse(req.body);
-    const sanitizedItems = await prepareCheckoutItems(payload.items);
+    const checkoutItems: CheckoutItemInput[] = payload.items.map((item) => ({
+      productId: item.productId,
+      quantity: item.quantity,
+      color: item.color,
+      length: item.length,
+    }));
+    const sanitizedItems = await prepareCheckoutItems(checkoutItems);
     const subtotalAmount = calculateSubtotalAmount(sanitizedItems);
 
     const result = await sequelize.transaction(async (transaction) => {

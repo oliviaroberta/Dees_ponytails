@@ -2,7 +2,7 @@ import { Op } from "sequelize";
 import { Product, SaleCampaign, SaleItem } from "../models/index.js";
 import { AppError } from "./app-error.js";
 
-interface CheckoutItemInput {
+export interface CheckoutItemInput {
   productId: string;
   quantity: number;
   color: string;
@@ -52,7 +52,7 @@ export const getActiveSalePriceMap = async (productIds: string[]) => {
   );
 };
 
-export const prepareCheckoutItems = async (items: CheckoutItemInput[]) => {
+export const prepareCheckoutItems = async (items: CheckoutItemInput[]): Promise<PreparedCheckoutItem[]> => {
   const products = await Product.findAll({
     where: {
       id: items.map((item) => item.productId),
