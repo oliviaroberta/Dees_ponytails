@@ -1,4 +1,4 @@
-import { app } from "./_app.js";
+import { handler } from "./_app.js";
 
 export const config = {
   api: {
@@ -7,4 +7,4 @@ export const config = {
   },
 };
 
-export default app;
+export default handler;

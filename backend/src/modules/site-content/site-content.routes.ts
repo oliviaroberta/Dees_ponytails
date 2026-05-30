@@ -11,17 +11,27 @@ const siteContentRouter = Router();
 siteContentRouter.get(
   "/",
   asyncHandler(async (_req, res) => {
-    const [entry] = await SiteContent.findOrCreate({
-      where: { key: "main" },
-      defaults: {
-        key: "main",
-        content: defaultSiteContent,
-      },
-    });
+    try {
+      const [entry] = await SiteContent.findOrCreate({
+        where: { key: "main" },
+        defaults: {
+          key: "main",
+          content: defaultSiteContent,
+        },
+      });
 
-    res.json({
-      item: serializeSiteContent(entry),
-    });
+      res.json({
+        item: serializeSiteContent(entry),
+      });
+    } catch (error) {
+      console.error("[site-content][get] request failed", {
+        method: _req.method,
+        url: _req.originalUrl,
+        message: error instanceof Error ? error.message : "Unknown error",
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+      throw error;
+    }
   }),
 );
 

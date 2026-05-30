@@ -25,34 +25,54 @@ const saleIncludes = [
 salesRouter.get(
   "/active",
   asyncHandler(async (_req, res) => {
-    const activeSale = await SaleCampaign.findOne({
-      where: { isEnabled: true },
-      include: saleIncludes,
-      order: [["createdAt", "DESC"]],
-    });
+    try {
+      const activeSale = await SaleCampaign.findOne({
+        where: { isEnabled: true },
+        include: saleIncludes,
+        order: [["createdAt", "DESC"]],
+      });
 
-    if (!activeSale) {
-      return res.status(404).json({ message: "No active sale campaign found" });
+      if (!activeSale) {
+        return res.status(404).json({ message: "No active sale campaign found" });
+      }
+
+      res.json({
+        item: serializeSaleCampaign(activeSale),
+      });
+    } catch (error) {
+      console.error("[sales][active] request failed", {
+        method: _req.method,
+        url: _req.originalUrl,
+        message: error instanceof Error ? error.message : "Unknown error",
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+      throw error;
     }
-
-    res.json({
-      item: serializeSaleCampaign(activeSale),
-    });
   }),
 );
 
 salesRouter.get(
   "/",
   asyncHandler(async (_req, res) => {
-    const campaigns = await SaleCampaign.findAll({
-      include: saleIncludes,
-      order: [["createdAt", "DESC"]],
-    });
+    try {
+      const campaigns = await SaleCampaign.findAll({
+        include: saleIncludes,
+        order: [["createdAt", "DESC"]],
+      });
 
-    res.json({
-      items: campaigns.map(serializeSaleCampaign),
-      count: campaigns.length,
-    });
+      res.json({
+        items: campaigns.map(serializeSaleCampaign),
+        count: campaigns.length,
+      });
+    } catch (error) {
+      console.error("[sales][list] request failed", {
+        method: _req.method,
+        url: _req.originalUrl,
+        message: error instanceof Error ? error.message : "Unknown error",
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+      throw error;
+    }
   }),
 );
 

@@ -1,3 +1,31 @@
 import { createApp } from "../backend/src/app.js";
 
-export const app = createApp();
+const app = createApp();
+
+const normalizeVercelApiUrl = (url: string) => {
+  const parsedUrl = new URL(url, "http://localhost");
+  const rawPath = parsedUrl.searchParams.get("path");
+
+  if (!rawPath) {
+    return url;
+  }
+
+  const normalizedPath = rawPath.startsWith("/") ? rawPath : `/${rawPath}`;
+
+  if (parsedUrl.pathname === "/api" || parsedUrl.pathname === "/api/") {
+    parsedUrl.pathname = `/api${normalizedPath}`;
+  }
+
+  parsedUrl.searchParams.delete("path");
+  return `${parsedUrl.pathname}${parsedUrl.search}`;
+};
+
+export const handler = (req: { url?: string }, res: unknown) => {
+  if (req.url) {
+    req.url = normalizeVercelApiUrl(req.url);
+  }
+
+  return app(req as never, res as never);
+};
+
+export { app };

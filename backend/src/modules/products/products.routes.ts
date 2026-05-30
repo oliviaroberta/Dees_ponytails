@@ -88,44 +88,55 @@ const countOtherFeaturedProducts = async (excludeId?: string) =>
 productsRouter.get(
   "/",
   asyncHandler(async (req, res) => {
-    const query = productListQuerySchema.parse(req.query);
-    const where: Record<string | symbol, unknown> = {};
+    try {
+      const query = productListQuerySchema.parse(req.query);
+      const where: Record<string | symbol, unknown> = {};
 
-    if (query.search) {
-      where[Op.or] = [
-        { name: { [Op.iLike]: `%${query.search}%` } },
-        { category: { [Op.iLike]: `%${query.search}%` } },
-        { textureStyle: { [Op.iLike]: `%${query.search}%` } },
-        { color: { [Op.iLike]: `%${query.search}%` } },
-        { slug: { [Op.iLike]: `%${query.search}%` } },
-      ];
+      if (query.search) {
+        where[Op.or] = [
+          { name: { [Op.iLike]: `%${query.search}%` } },
+          { category: { [Op.iLike]: `%${query.search}%` } },
+          { textureStyle: { [Op.iLike]: `%${query.search}%` } },
+          { color: { [Op.iLike]: `%${query.search}%` } },
+          { slug: { [Op.iLike]: `%${query.search}%` } },
+        ];
+      }
+
+      if (query.category) {
+        where.category = { [Op.iLike]: `%${query.category}%` };
+      }
+
+      if (query.status) {
+        where.status = query.status;
+      }
+
+      if (query.featured !== undefined) {
+        where.featured = query.featured;
+      }
+
+      const products = await Product.findAll({
+        where,
+        limit: query.limit,
+        order: [
+          ["featured", "DESC"],
+          ["createdAt", "DESC"],
+        ],
+      });
+
+      res.json({
+        items: products.map(serializeProduct),
+        count: products.length,
+      });
+    } catch (error) {
+      console.error("[products][list] request failed", {
+        method: req.method,
+        url: req.originalUrl,
+        query: req.query,
+        message: error instanceof Error ? error.message : "Unknown error",
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+      throw error;
     }
-
-    if (query.category) {
-      where.category = { [Op.iLike]: `%${query.category}%` };
-    }
-
-    if (query.status) {
-      where.status = query.status;
-    }
-
-    if (query.featured !== undefined) {
-      where.featured = query.featured;
-    }
-
-    const products = await Product.findAll({
-      where,
-      limit: query.limit,
-      order: [
-        ["featured", "DESC"],
-        ["createdAt", "DESC"],
-      ],
-    });
-
-    res.json({
-      items: products.map(serializeProduct),
-      count: products.length,
-    });
   }),
 );
 
