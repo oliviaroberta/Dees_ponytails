@@ -1,4 +1,3 @@
 import { createApp } from "../backend/src/app.js";
 
-export const app = createApp();
-
+export const app = createApp({ apiBasePath: "/" });
