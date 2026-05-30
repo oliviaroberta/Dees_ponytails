@@ -49,14 +49,14 @@ const Navbar = () => {
     <motion.nav
       animate={{ y: hidden ? "-100%" : "0%" }}
       transition={{ duration: 0.3, ease: "easeInOut" }}
-      className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-sm"
+      className="fixed left-0 right-0 top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-sm"
     >
       <div className="container mx-auto flex h-20 items-center justify-between px-4 lg:h-24 lg:px-8">
         <Link to="/" className="flex items-center lg:-ml-4">
           <img
             src={logo}
             alt="Dees_ponytails"
-            className="h-400 w-auto object-contain sm:h-0 lg:h-28 xl:h-32"
+            className="h-14 w-auto object-contain sm:h-16 lg:h-24 xl:h-28"
           />
         </Link>
 
@@ -91,7 +91,7 @@ const Navbar = () => {
           >
             <ShoppingBag size={22} />
             {itemCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-xs font-medium text-accent-foreground">
+              <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-xs font-medium text-accent-foreground">
                 {itemCount}
               </span>
             )}

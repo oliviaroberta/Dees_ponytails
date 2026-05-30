@@ -208,7 +208,7 @@ const AdminGallery = () => {
               )
             ) : (
               <div className="flex aspect-[4/5] items-center justify-center px-6 text-center font-body text-sm text-muted-foreground">
-                Gallery preview will appear here.
+                Select a photo or video to preview it before publishing.
               </div>
             )}
           </div>

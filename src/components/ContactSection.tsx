@@ -10,7 +10,7 @@ const ContactSection = () => {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          className="text-center max-w-2xl mx-auto"
+          className="mx-auto max-w-2xl text-center"
         >
           <p className="mb-3 font-body text-sm uppercase tracking-[0.3em] text-muted-foreground">
             Get in Touch
@@ -19,11 +19,11 @@ const ContactSection = () => {
             Ready to <span className="font-semibold italic">Order?</span>
           </h2>
           <p className="mb-10 font-body text-lg leading-relaxed text-muted-foreground">
-            Ordering is simple — browse our collection, add your items to cart, and complete
+            Ordering is simple. Browse our collection, add your items to cart, and complete
             checkout securely online. We accept{" "}
             <strong className="text-foreground">Mobile Money</strong> and{" "}
-            <strong className="text-foreground">card payments</strong> through Paystack, and
-            you can still reach us on WhatsApp if you need help before or after ordering.
+            <strong className="text-foreground">card payments</strong> through Paystack, and you
+            can still reach us on WhatsApp if you need help before or after ordering.
           </p>
 
           <div className="mb-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
