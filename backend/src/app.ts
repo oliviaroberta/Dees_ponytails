@@ -7,7 +7,11 @@ import { env } from "./config/env.js";
 import { apiRouter } from "./routes/index.js";
 import { errorHandler } from "./middleware/error-handler.js";
 
-export const createApp = () => {
+type CreateAppOptions = {
+  apiBasePath?: string;
+};
+
+export const createApp = ({ apiBasePath = "/api" }: CreateAppOptions = {}) => {
   const app = express();
   const normalizeOrigin = (value: string) => value.replace(/\/$/, "");
   const isProduction = env.NODE_ENV === "production";
@@ -57,7 +61,7 @@ export const createApp = () => {
     }),
   );
 
-  app.use("/api", apiRouter);
+  app.use(apiBasePath, apiRouter);
 
   app.use(errorHandler);
 
