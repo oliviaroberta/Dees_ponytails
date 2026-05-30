@@ -1,5 +1,3 @@
-import fs from "node:fs";
-import path from "node:path";
 import { Router } from "express";
 import multer from "multer";
 import { requireAdmin } from "../../middleware/require-admin.js";
@@ -13,9 +11,6 @@ import {
 } from "../../utils/cloudinary.js";
 
 const uploadsRouter = Router();
-const productImageDir = path.join(process.cwd(), "uploads", "products");
-const productVideoDir = path.join(process.cwd(), "uploads", "videos");
-const shouldUseCloudinary = isCloudinaryConfigured();
 const adminUploadRateLimit = createRateLimit({
   keyPrefix: "uploads:product-media",
   windowMs: 10 * 60 * 1000,
@@ -23,28 +18,11 @@ const adminUploadRateLimit = createRateLimit({
   message: "Too many media uploads. Please wait a moment and try again.",
 });
 
-if (!shouldUseCloudinary) {
-  fs.mkdirSync(productImageDir, { recursive: true });
-  fs.mkdirSync(productVideoDir, { recursive: true });
-}
-
-const buildStorage = (destinationDir: string) =>
-  multer.diskStorage({
-    destination: (_req, _file, callback) => {
-      callback(null, destinationDir);
-    },
-    filename: (_req, file, callback) => {
-      callback(null, buildUploadFileName(file.originalname));
-    },
-  });
-
-const buildUploadStorage = (destinationDir: string) =>
-  shouldUseCloudinary ? multer.memoryStorage() : buildStorage(destinationDir);
-
 const buildUploadFileName = (originalName: string) => {
-  const extension = path.extname(originalName).toLowerCase() || ".bin";
-  const baseName = path
-    .basename(originalName, extension)
+  const extensionMatch = originalName.match(/(\.[a-z0-9]+)$/i);
+  const extension = extensionMatch?.[1]?.toLowerCase() || ".bin";
+  const baseName = originalName
+    .replace(/\.[a-z0-9]+$/i, "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
@@ -54,7 +32,7 @@ const buildUploadFileName = (originalName: string) => {
 };
 
 const imageUpload = multer({
-  storage: buildUploadStorage(productImageDir),
+  storage: multer.memoryStorage(),
   limits: {
     fileSize: 5 * 1024 * 1024,
   },
@@ -69,7 +47,7 @@ const imageUpload = multer({
 });
 
 const videoUpload = multer({
-  storage: buildUploadStorage(productVideoDir),
+  storage: multer.memoryStorage(),
   limits: {
     fileSize: 30 * 1024 * 1024,
   },
@@ -83,22 +61,6 @@ const videoUpload = multer({
   },
 });
 
-const removeLocalFile = (filePath: string) => {
-  try {
-    fs.unlinkSync(filePath);
-  } catch {
-    // Ignore cleanup errors after a successful cloud upload.
-  }
-};
-
-const getUploadBuffer = (file: Express.Multer.File, localDir: string) => {
-  if (file.buffer) {
-    return file.buffer;
-  }
-
-  return fs.readFileSync(path.join(localDir, file.filename));
-};
-
 uploadsRouter.post(
   "/product-image",
   requireAdmin,
@@ -108,25 +70,21 @@ uploadsRouter.post(
     if (!req.file) {
       throw new AppError("Image file is required", 400);
     }
-
-    const fileName = req.file.filename || buildUploadFileName(req.file.originalname);
-    const localFilePath = req.file.filename ? path.join(productImageDir, req.file.filename) : null;
-    const imageUrl = shouldUseCloudinary
-      ? await uploadImageToCloudinary({
-          buffer: getUploadBuffer(req.file, productImageDir),
-          mimeType: req.file.mimetype,
-          fileName,
-        })
-      : `/uploads/products/${req.file.filename}`;
-
-    if (shouldUseCloudinary && localFilePath && fs.existsSync(localFilePath)) {
-      removeLocalFile(localFilePath);
+    if (!isCloudinaryConfigured()) {
+      throw new AppError("Cloudinary is not configured", 503);
     }
+
+    const fileName = buildUploadFileName(req.file.originalname);
+    const imageUrl = await uploadImageToCloudinary({
+      buffer: req.file.buffer,
+      mimeType: req.file.mimetype,
+      fileName,
+    });
 
     res.status(201).json({
       message: "Image uploaded successfully",
       imageUrl,
-      fileName: req.file.filename,
+      fileName,
     });
   }),
 );
@@ -140,25 +98,21 @@ uploadsRouter.post(
     if (!req.file) {
       throw new AppError("Video file is required", 400);
     }
-
-    const fileName = req.file.filename || buildUploadFileName(req.file.originalname);
-    const localFilePath = req.file.filename ? path.join(productVideoDir, req.file.filename) : null;
-    const videoUrl = shouldUseCloudinary
-      ? await uploadVideoToCloudinary({
-          buffer: getUploadBuffer(req.file, productVideoDir),
-          mimeType: req.file.mimetype,
-          fileName,
-        })
-      : `/uploads/videos/${req.file.filename}`;
-
-    if (shouldUseCloudinary && localFilePath && fs.existsSync(localFilePath)) {
-      removeLocalFile(localFilePath);
+    if (!isCloudinaryConfigured()) {
+      throw new AppError("Cloudinary is not configured", 503);
     }
+
+    const fileName = buildUploadFileName(req.file.originalname);
+    const videoUrl = await uploadVideoToCloudinary({
+      buffer: req.file.buffer,
+      mimeType: req.file.mimetype,
+      fileName,
+    });
 
     res.status(201).json({
       message: "Video uploaded successfully",
       videoUrl,
-      fileName: req.file.filename,
+      fileName,
     });
   }),
 );
