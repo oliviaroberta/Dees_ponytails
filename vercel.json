@@ -3,6 +3,9 @@
     "api/auth/[...path].ts": {
       "maxDuration": 60
     },
+    "api/uploads/[...path].ts": {
+      "maxDuration": 60
+    },
     "api/[...path].ts": {
       "maxDuration": 60
     },
