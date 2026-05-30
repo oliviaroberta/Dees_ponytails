@@ -4,7 +4,9 @@ const app = createApp();
 
 const normalizeVercelApiUrl = (url: string) => {
   const parsedUrl = new URL(url, "http://localhost");
-  const rawPath = parsedUrl.searchParams.get("path");
+  const rawPathSegments = parsedUrl.searchParams.getAll("path").filter(Boolean);
+  const rawPath =
+    rawPathSegments.length > 0 ? rawPathSegments.join("/") : parsedUrl.searchParams.get("path");
 
   if (!rawPath) {
     return url;
