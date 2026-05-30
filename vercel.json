@@ -3,6 +3,9 @@
     "api/auth/[...path].ts": {
       "maxDuration": 60
     },
+    "api/payments/verify/[reference].ts": {
+      "maxDuration": 60
+    },
     "api/payments/[...path].ts": {
       "maxDuration": 60
     },
