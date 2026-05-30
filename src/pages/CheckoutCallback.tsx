@@ -4,7 +4,7 @@ import { CheckCircle2, LoaderCircle, XCircle } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import backgroundImage from "@/assets/background.jpg";
-import { apiRequest } from "@/lib/api";
+import { API_BASE_URL, apiRequest } from "@/lib/api";
 import { useCart } from "@/context/CartContext";
 
 type VerificationState =
@@ -18,7 +18,7 @@ const CheckoutCallback = () => {
   const [state, setState] = useState<VerificationState>({ status: "loading" });
 
   useEffect(() => {
-    const reference = searchParams.get("reference");
+    const reference = searchParams.get("reference")?.trim();
 
     if (!reference) {
       setState({ status: "error", message: "Missing payment reference." });
@@ -29,6 +29,13 @@ const CheckoutCallback = () => {
 
     const verifyPayment = async () => {
       try {
+        const encodedReference = encodeURIComponent(reference);
+        const verifyPath = `/payments/verify/${encodedReference}`;
+        console.log("[checkout-callback] verifying payment", {
+          reference,
+          verifyUrl: `${API_BASE_URL}${verifyPath}`,
+        });
+
         const response = await apiRequest<{
           verified: boolean;
           message: string;
@@ -37,7 +44,7 @@ const CheckoutCallback = () => {
             customerName: string;
             customerPhone: string;
           };
-        }>(`/payments/verify/${reference}`);
+        }>(verifyPath);
 
         if (!isMounted) {
           return;
