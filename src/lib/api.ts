@@ -1,5 +1,6 @@
 export const API_BASE_URL = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, "") ??
   "/api";
+export const ADMIN_AUTH_STORAGE_KEY = "dees_admin_auth";
 
 export class ApiError extends Error {
   status: number;
@@ -49,11 +50,30 @@ type RequestOptions = RequestInit & {
 export const apiRequest = async <T>(path: string, options: RequestOptions = {}): Promise<T> => {
   const { token, headers, body, ...rest } = options;
   const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
+  const storedToken =
+    token ??
+    (() => {
+      if (typeof window === "undefined") {
+        return null;
+      }
+
+      try {
+        const raw = window.localStorage.getItem(ADMIN_AUTH_STORAGE_KEY);
+        if (!raw) {
+          return null;
+        }
+
+        const parsed = JSON.parse(raw) as { accessToken?: string | null };
+        return parsed.accessToken ?? null;
+      } catch {
+        return null;
+      }
+    })();
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...rest,
     headers: {
       ...(isFormData ? {} : { "Content-Type": "application/json" }),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(storedToken ? { Authorization: `Bearer ${storedToken}` } : {}),
       ...headers,
     },
     body,

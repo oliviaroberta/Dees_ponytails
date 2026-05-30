@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { apiRequest, ApiError } from "@/lib/api";
+import { ADMIN_AUTH_STORAGE_KEY, apiRequest, ApiError } from "@/lib/api";
 
 interface AdminUser {
   id: string;
@@ -23,8 +23,6 @@ interface AuthContextType extends AuthState {
   changePassword: (payload: { currentPassword: string; newPassword: string }) => Promise<void>;
 }
 
-const STORAGE_KEY = "dees_admin_auth";
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -33,7 +31,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return { accessToken: null, refreshToken: null, admin: null };
     }
 
-    const saved = window.localStorage.getItem(STORAGE_KEY);
+    const saved = window.localStorage.getItem(ADMIN_AUTH_STORAGE_KEY);
     if (!saved) {
       return { accessToken: null, refreshToken: null, admin: null };
     }
@@ -44,12 +42,66 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return { accessToken: null, refreshToken: null, admin: null };
     }
   });
-  const [isBootstrapping] = useState(false);
+  const [isBootstrapping, setIsBootstrapping] = useState(true);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    window.localStorage.setItem(ADMIN_AUTH_STORAGE_KEY, JSON.stringify(state));
   }, [state]);
+
+  useEffect(() => {
+    let active = true;
+
+    const bootstrap = async () => {
+      if (!state.refreshToken) {
+        if (active) {
+          setIsBootstrapping(false);
+        }
+        return;
+      }
+
+      try {
+        const response = await apiRequest<{
+          accessToken: string;
+          refreshToken: string;
+          admin: AdminUser;
+        }>("/auth/refresh", {
+          method: "POST",
+          body: JSON.stringify({ refreshToken: state.refreshToken }),
+        });
+
+        if (!active) {
+          return;
+        }
+
+        setState({
+          accessToken: response.accessToken,
+          refreshToken: response.refreshToken,
+          admin: response.admin,
+        });
+      } catch {
+        if (!active) {
+          return;
+        }
+
+        setState({
+          accessToken: null,
+          refreshToken: null,
+          admin: null,
+        });
+      } finally {
+        if (active) {
+          setIsBootstrapping(false);
+        }
+      }
+    };
+
+    void bootstrap();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const value = useMemo<AuthContextType>(
     () => ({
