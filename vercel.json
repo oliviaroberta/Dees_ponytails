@@ -3,10 +3,28 @@
     "api/auth/[...path].ts": {
       "maxDuration": 60
     },
+    "api/gallery/[...path].ts": {
+      "maxDuration": 60
+    },
+    "api/orders/[...path].ts": {
+      "maxDuration": 60
+    },
     "api/payments/verify/[reference].ts": {
       "maxDuration": 60
     },
     "api/payments/[...path].ts": {
+      "maxDuration": 60
+    },
+    "api/products/[...path].ts": {
+      "maxDuration": 60
+    },
+    "api/reviews/[...path].ts": {
+      "maxDuration": 60
+    },
+    "api/sales/[...path].ts": {
+      "maxDuration": 60
+    },
+    "api/site-content/[...path].ts": {
       "maxDuration": 60
     },
     "api/uploads/[...path].ts": {

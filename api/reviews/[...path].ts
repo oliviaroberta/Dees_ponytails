@@ -8,7 +8,7 @@ export const config = {
 };
 
 export default createApiFamilyHandler({
-  defaultUrl: "/api/payments",
-  familySegments: ["payments"],
-  label: "payments-route",
+  defaultUrl: "/api/reviews",
+  familySegments: ["reviews"],
+  label: "reviews-route",
 });

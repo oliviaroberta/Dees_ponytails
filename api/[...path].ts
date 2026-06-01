@@ -1,4 +1,4 @@
-import { handler } from "./_app.js";
+import { createApiFamilyHandler } from "./_family-handler.js";
 
 export const config = {
   api: {
@@ -7,4 +7,7 @@ export const config = {
   },
 };
 
-export default handler;
+export default createApiFamilyHandler({
+  defaultUrl: "/api",
+  label: "api-route",
+});
