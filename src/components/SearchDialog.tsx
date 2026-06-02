@@ -16,22 +16,22 @@ interface Props {
 const SearchDialog = ({ open, onOpenChange }: Props) => {
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
-  const { products } = useAdminProducts();
+  const { storefrontProducts } = useAdminProducts();
   const { formatPrice } = useCurrency();
   const { getSalePrice } = useSales();
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return products;
+    if (!q) return storefrontProducts;
 
-    return products.filter(
+    return storefrontProducts.filter(
       (product) =>
         product.name.toLowerCase().includes(q) ||
         product.textureStyle.toLowerCase().includes(q) ||
         product.category.toLowerCase().includes(q) ||
         product.description.toLowerCase().includes(q),
     );
-  }, [products, query]);
+  }, [query, storefrontProducts]);
 
   const handleSelect = (productId: string) => {
     onOpenChange(false);

@@ -3,7 +3,11 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ShoppingBag, CreditCard } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useCurrency } from "@/context/CurrencyContext";
-import type { CatalogProduct } from "@/types/product";
+import {
+  getProductStatusLabel,
+  isPurchasableStatus,
+  type CatalogProduct,
+} from "@/types/product";
 import { useNavigate } from "react-router-dom";
 import { getProductImage } from "@/lib/productImages";
 
@@ -45,8 +49,13 @@ const ProductDetailDialog = ({ product, open, onOpenChange }: Props) => {
   }, [lengthOptions, colorOptions, product?.id]);
 
   if (!product) return null;
+  const isPurchasable = isPurchasableStatus(product.status);
 
   const handleAdd = () => {
+    if (!isPurchasable) {
+      return;
+    }
+
     addItem({
       id: product.id,
       name: product.name,
@@ -60,6 +69,10 @@ const ProductDetailDialog = ({ product, open, onOpenChange }: Props) => {
   };
 
   const handleBuyNow = () => {
+    if (!isPurchasable) {
+      return;
+    }
+
     addItem({
       id: product.id,
       name: product.name,
@@ -102,9 +115,17 @@ const ProductDetailDialog = ({ product, open, onOpenChange }: Props) => {
                     : "bg-secondary text-foreground"
                 }`}
               >
-                {product.status === "inStock" ? "In Stock" : "Out of Stock"}
+                {getProductStatusLabel(product.status)}
               </span>
             </div>
+
+            {!isPurchasable ? (
+              <div className="mb-5 rounded-2xl border border-border/60 bg-background/60 p-4">
+                <p className="font-body text-sm text-muted-foreground">
+                  This product is currently unavailable for checkout.
+                </p>
+              </div>
+            ) : null}
 
             <div className="mb-6 space-y-5">
               <OptionGroup
@@ -144,13 +165,15 @@ const ProductDetailDialog = ({ product, open, onOpenChange }: Props) => {
             <div className="mt-6 flex flex-col gap-2 pt-2 sm:flex-row">
               <button
                 onClick={handleAdd}
-                className="flex flex-1 items-center justify-center gap-2 rounded border border-foreground px-5 py-3 font-body text-sm tracking-wide text-foreground transition-colors hover:bg-foreground hover:text-background"
+                disabled={!isPurchasable}
+                className="flex flex-1 items-center justify-center gap-2 rounded border border-foreground px-5 py-3 font-body text-sm tracking-wide text-foreground transition-colors hover:bg-foreground hover:text-background disabled:cursor-not-allowed disabled:border-border disabled:text-muted-foreground disabled:hover:bg-transparent"
               >
                 <ShoppingBag size={16} /> Add to Cart
               </button>
               <button
                 onClick={handleBuyNow}
-                className="flex flex-1 items-center justify-center gap-2 rounded bg-accent px-5 py-3 font-body text-sm tracking-wide text-accent-foreground transition-opacity hover:opacity-90"
+                disabled={!isPurchasable}
+                className="flex flex-1 items-center justify-center gap-2 rounded bg-accent px-5 py-3 font-body text-sm tracking-wide text-accent-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <CreditCard size={16} /> Buy Now
               </button>

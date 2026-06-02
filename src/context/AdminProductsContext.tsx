@@ -1,7 +1,12 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { API_BASE_URL, apiRequest } from "@/lib/api";
 import { slugify } from "@/lib/strings";
-import type { CatalogProduct, CatalogProductInput } from "@/types/product";
+import {
+  PUBLIC_PRODUCT_STATUSES,
+  type CatalogProduct,
+  type CatalogProductInput,
+  type ProductStatus,
+} from "@/types/product";
 import { useAuth } from "./AuthContext";
 
 export type AdminProduct = CatalogProduct;
@@ -9,12 +14,14 @@ export type AdminProductInput = CatalogProductInput;
 
 interface AdminProductsContextType {
   products: CatalogProduct[];
+  storefrontProducts: CatalogProduct[];
   isLoading: boolean;
   error: string | null;
   uploadProductImage: (file: File) => Promise<string>;
   uploadProductVideo: (file: File) => Promise<string>;
   addProduct: (product: CatalogProductInput) => Promise<void>;
   updateProduct: (id: string, updates: CatalogProductInput) => Promise<void>;
+  setProductStatus: (id: string, status: ProductStatus) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
   getProductById: (id: string) => CatalogProduct | undefined;
   refreshProducts: () => Promise<void>;
@@ -34,19 +41,41 @@ interface BackendProduct {
   price: number;
   description: string;
   featured: boolean;
-  status: "IN_STOCK" | "OUT_OF_STOCK";
+  status: "IN_STOCK" | "OUT_OF_STOCK" | "ARCHIVED" | "DRAFT";
 }
 
 const AdminProductsContext = createContext<AdminProductsContextType | undefined>(undefined);
-let productsCache: CatalogProduct[] | null = null;
-let productsRequest: Promise<CatalogProduct[]> | null = null;
+let publicProductsCache: CatalogProduct[] | null = null;
+let allProductsCache: CatalogProduct[] | null = null;
+let publicProductsRequest: Promise<CatalogProduct[]> | null = null;
+let allProductsRequest: Promise<CatalogProduct[]> | null = null;
 const BACKEND_BASE_URL = API_BASE_URL.replace(/\/api$/, "");
 
-const toFrontendStatus = (status: BackendProduct["status"]) =>
-  status === "IN_STOCK" ? "inStock" : "outOfStock";
+const toFrontendStatus = (status: BackendProduct["status"]): ProductStatus => {
+  switch (status) {
+    case "IN_STOCK":
+      return "inStock";
+    case "OUT_OF_STOCK":
+      return "outOfStock";
+    case "ARCHIVED":
+      return "archived";
+    case "DRAFT":
+      return "draft";
+  }
+};
 
-const toBackendStatus = (status: CatalogProduct["status"]) =>
-  status === "inStock" ? "IN_STOCK" : "OUT_OF_STOCK";
+const toBackendStatus = (status: CatalogProduct["status"]) => {
+  switch (status) {
+    case "inStock":
+      return "IN_STOCK";
+    case "outOfStock":
+      return "OUT_OF_STOCK";
+    case "archived":
+      return "ARCHIVED";
+    case "draft":
+      return "DRAFT";
+  }
+};
 
 const normalizeProductImage = (image: string) => {
   const trimmed = image.trim();
@@ -102,24 +131,42 @@ const mapProduct = (product: BackendProduct): CatalogProduct => ({
   status: toFrontendStatus(product.status),
 });
 
-const fetchProducts = async () => {
-  if (productsCache) {
-    return productsCache;
+const fetchProducts = async (includeHidden: boolean) => {
+  const cachedProducts = includeHidden ? allProductsCache : publicProductsCache;
+  if (cachedProducts) {
+    return cachedProducts;
   }
 
-  if (!productsRequest) {
-    productsRequest = apiRequest<{ items: BackendProduct[] }>("/products")
+  const request = includeHidden ? allProductsRequest : publicProductsRequest;
+  if (!request) {
+    const nextRequest = apiRequest<{ items: BackendProduct[] }>(
+      includeHidden ? "/products?visibility=all" : "/products",
+    )
       .then((response) => {
         const mapped = response.items.map(mapProduct);
-        productsCache = mapped;
+        if (includeHidden) {
+          allProductsCache = mapped;
+        } else {
+          publicProductsCache = mapped;
+        }
         return mapped;
       })
       .finally(() => {
-        productsRequest = null;
+        if (includeHidden) {
+          allProductsRequest = null;
+        } else {
+          publicProductsRequest = null;
+        }
       });
+
+    if (includeHidden) {
+      allProductsRequest = nextRequest;
+    } else {
+      publicProductsRequest = nextRequest;
+    }
   }
 
-  return productsRequest;
+  return includeHidden ? allProductsRequest! : publicProductsRequest!;
 };
 
 export const AdminProductsProvider = ({ children }: { children: React.ReactNode }) => {
@@ -133,8 +180,9 @@ export const AdminProductsProvider = ({ children }: { children: React.ReactNode 
     setError(null);
 
     try {
-      productsCache = null;
-      const nextProducts = await fetchProducts();
+      publicProductsCache = null;
+      allProductsCache = null;
+      const nextProducts = await fetchProducts(!!accessToken);
       setProducts(nextProducts);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Failed to load products");
@@ -151,7 +199,7 @@ export const AdminProductsProvider = ({ children }: { children: React.ReactNode 
       setError(null);
 
       try {
-        const nextProducts = await fetchProducts();
+        const nextProducts = await fetchProducts(!!accessToken);
         if (isMounted) {
           setProducts(nextProducts);
         }
@@ -171,11 +219,17 @@ export const AdminProductsProvider = ({ children }: { children: React.ReactNode 
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [accessToken]);
+
+  const storefrontProducts = useMemo(
+    () => products.filter((product) => PUBLIC_PRODUCT_STATUSES.includes(product.status)),
+    [products],
+  );
 
   const value = useMemo<AdminProductsContextType>(
     () => ({
       products,
+      storefrontProducts,
       isLoading,
       error,
       uploadProductImage: async (file) => {
@@ -228,7 +282,10 @@ export const AdminProductsProvider = ({ children }: { children: React.ReactNode 
         const nextProduct = mapProduct(response.item);
         setProducts((current) => {
           const nextProducts = [...current, nextProduct];
-          productsCache = nextProducts;
+          publicProductsCache = nextProducts.filter((product) =>
+            PUBLIC_PRODUCT_STATUSES.includes(product.status),
+          );
+          allProductsCache = nextProducts;
           return nextProducts;
         });
       },
@@ -251,7 +308,34 @@ export const AdminProductsProvider = ({ children }: { children: React.ReactNode 
           const nextProducts = current.map((product) =>
             product.id === id ? mapProduct(response.item) : product,
           );
-          productsCache = nextProducts;
+          publicProductsCache = nextProducts.filter((product) =>
+            PUBLIC_PRODUCT_STATUSES.includes(product.status),
+          );
+          allProductsCache = nextProducts;
+          return nextProducts;
+        });
+      },
+      setProductStatus: async (id, status) => {
+        if (!accessToken) {
+          throw new Error("Admin authentication is required");
+        }
+
+        const response = await apiRequest<{ item: BackendProduct }>(`/products/${id}`, {
+          method: "PATCH",
+          token: accessToken,
+          body: JSON.stringify({
+            status: toBackendStatus(status),
+          }),
+        });
+
+        setProducts((current) => {
+          const nextProducts = current.map((product) =>
+            product.id === id ? mapProduct(response.item) : product,
+          );
+          publicProductsCache = nextProducts.filter((product) =>
+            PUBLIC_PRODUCT_STATUSES.includes(product.status),
+          );
+          allProductsCache = nextProducts;
           return nextProducts;
         });
       },
@@ -267,14 +351,17 @@ export const AdminProductsProvider = ({ children }: { children: React.ReactNode 
 
         setProducts((current) => {
           const nextProducts = current.filter((product) => product.id !== id);
-          productsCache = nextProducts;
+          publicProductsCache = nextProducts.filter((product) =>
+            PUBLIC_PRODUCT_STATUSES.includes(product.status),
+          );
+          allProductsCache = nextProducts;
           return nextProducts;
         });
       },
       getProductById: (id) => products.find((product) => product.id === id),
       refreshProducts,
     }),
-    [accessToken, error, isLoading, products],
+    [accessToken, error, isLoading, products, storefrontProducts],
   );
 
   return <AdminProductsContext.Provider value={value}>{children}</AdminProductsContext.Provider>;

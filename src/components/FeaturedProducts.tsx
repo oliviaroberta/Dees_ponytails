@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { useAdminProducts } from "@/context/AdminProductsContext";
 import { useCurrency } from "@/context/CurrencyContext";
 import { useSales } from "@/context/SalesContext";
-import type { CatalogProduct } from "@/types/product";
+import { getProductStatusLabel, type CatalogProduct } from "@/types/product";
 import { getProductImage } from "@/lib/productImages";
 import ProductImageBadges from "./ProductImageBadges";
 
@@ -44,6 +44,11 @@ const FeaturedCard = ({ product, index }: { product: CatalogProduct; index: numb
           </h3>
           <div className="mt-3 flex items-end justify-between gap-4">
             <div>
+              {product.status === "outOfStock" ? (
+                <p className="mb-1 font-body text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                  {getProductStatusLabel(product.status)}
+                </p>
+              ) : null}
               {salePrice ? (
                 <p className="font-body text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
                   Original Price
@@ -78,9 +83,9 @@ const FeaturedCard = ({ product, index }: { product: CatalogProduct; index: numb
 };
 
 const FeaturedProducts = () => {
-  const { products } = useAdminProducts();
-  const featuredPool = products.filter((product) => product.featured);
-  const featured = (featuredPool.length > 0 ? featuredPool : products).slice(0, 3);
+  const { storefrontProducts } = useAdminProducts();
+  const featuredPool = storefrontProducts.filter((product) => product.featured);
+  const featured = (featuredPool.length > 0 ? featuredPool : storefrontProducts).slice(0, 3);
 
   return (
     <section className="section-transparent py-20">

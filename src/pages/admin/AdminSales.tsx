@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import AdminShell from "@/components/admin/AdminShell";
 import { useAdminProducts } from "@/context/AdminProductsContext";
 import { useSales } from "@/context/SalesContext";
+import { isStorefrontVisibleStatus } from "@/types/product";
 import PaginationControls from "@/components/PaginationControls";
 
 const SALES_PRODUCTS_PER_PAGE = 6;
@@ -22,16 +23,20 @@ const AdminSales = () => {
     () => JSON.stringify(draft) !== JSON.stringify(sales),
     [draft, sales],
   );
+  const saleEligibleProducts = useMemo(
+    () => products.filter((product) => isStorefrontVisibleStatus(product.status)),
+    [products],
+  );
 
   const selectedCount = draft.saleItems.length;
-  const totalPages = Math.max(1, Math.ceil(products.length / SALES_PRODUCTS_PER_PAGE));
+  const totalPages = Math.max(1, Math.ceil(saleEligibleProducts.length / SALES_PRODUCTS_PER_PAGE));
   const paginatedProducts = useMemo(
     () =>
-      products.slice(
+      saleEligibleProducts.slice(
         (currentPage - 1) * SALES_PRODUCTS_PER_PAGE,
         currentPage * SALES_PRODUCTS_PER_PAGE,
       ),
-    [currentPage, products],
+    [currentPage, saleEligibleProducts],
   );
 
   const getSaleItem = (productId: string) =>
@@ -223,7 +228,7 @@ const AdminSales = () => {
           currentPage={currentPage}
           totalPages={totalPages}
           pageSize={SALES_PRODUCTS_PER_PAGE}
-          totalItems={products.length}
+          totalItems={saleEligibleProducts.length}
           itemLabel="product"
           onPageChange={setCurrentPage}
         />

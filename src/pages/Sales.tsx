@@ -11,18 +11,19 @@ import { useCurrency } from "@/context/CurrencyContext";
 import { getProductImage } from "@/lib/productImages";
 import ProductImageBadges from "@/components/ProductImageBadges";
 import PaginationControls from "@/components/PaginationControls";
+import { getProductStatusLabel } from "@/types/product";
 
 const SALE_PRODUCTS_PER_PAGE = 8;
 
 const Sales = () => {
-  const { products } = useAdminProducts();
+  const { storefrontProducts } = useAdminProducts();
   const { sales, isLive } = useSales();
   const { formatPrice, currency } = useCurrency();
   const [currentPage, setCurrentPage] = useState(1);
 
   const saleProducts = sales.saleItems
     .map((saleItem) => {
-      const product = products.find((item) => item.id === saleItem.productId);
+      const product = storefrontProducts.find((item) => item.id === saleItem.productId);
       if (!product || saleItem.salePrice <= 0) return null;
 
       return { product, salePrice: saleItem.salePrice };
@@ -118,6 +119,11 @@ const Sales = () => {
 
                     <div className="mt-4 flex items-end justify-between gap-3">
                       <div>
+                        {product.status === "outOfStock" ? (
+                          <p className="mb-1 font-body text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                            {getProductStatusLabel(product.status)}
+                          </p>
+                        ) : null}
                         <p className="font-body text-xs uppercase tracking-[0.18em] text-muted-foreground">
                           Was
                         </p>

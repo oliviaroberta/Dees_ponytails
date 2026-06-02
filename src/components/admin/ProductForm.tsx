@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import type { AdminProductInput } from "@/context/AdminProductsContext";
 import { useAdminProducts } from "@/context/AdminProductsContext";
-import type { ProductStatus } from "@/types/product";
+import {
+  getProductStatusLabel,
+  isStorefrontVisibleStatus,
+  type ProductStatus,
+} from "@/types/product";
 
 export interface ProductFormValues {
   name: string;
@@ -56,6 +60,7 @@ const ProductForm = ({
     [currentProductId, products],
   );
   const featuredLimitReached = featuredProductCount >= 3;
+  const canBeFeatured = isStorefrontVisibleStatus(values.status);
 
   const update = <K extends keyof ProductFormValues>(key: K, value: ProductFormValues[K]) => {
     setValues((current) => ({ ...current, [key]: value }));
@@ -209,7 +214,12 @@ const ProductForm = ({
               >
                 <option value="inStock">In Stock</option>
                 <option value="outOfStock">Out of Stock</option>
+                <option value="archived">Archived</option>
+                <option value="draft">Draft</option>
               </select>
+              <p className="mt-1.5 font-body text-xs text-muted-foreground">
+                Archived and Draft products stay in your catalog but are hidden from the storefront.
+              </p>
             </div>
 
             <div className="flex items-center rounded-2xl border border-border/60 bg-background/60 px-4 py-4">
@@ -217,7 +227,7 @@ const ProductForm = ({
                 id="featured"
                 type="checkbox"
                 checked={values.featured}
-                disabled={featuredLimitReached && !values.featured}
+                disabled={!canBeFeatured || (featuredLimitReached && !values.featured)}
                 onChange={(e) => update("featured", e.target.checked)}
                 className="h-4 w-4 rounded border-border"
               />
@@ -226,7 +236,9 @@ const ProductForm = ({
                   Mark this product as featured
                 </label>
                 <p className="mt-1 font-body text-xs text-muted-foreground">
-                  {featuredLimitReached && !values.featured
+                  {!canBeFeatured
+                    ? "Only In Stock or Out of Stock products can be featured publicly."
+                    : featuredLimitReached && !values.featured
                     ? "You already have 3 featured products on the homepage."
                     : `${Math.max(3 - featuredProductCount, 0)} of 3 featured slots available.`}
                 </p>
@@ -299,10 +311,12 @@ const ProductForm = ({
                 className={`rounded-full px-3 py-1 font-body text-[11px] uppercase tracking-[0.18em] ${
                   values.status === "inStock"
                     ? "bg-primary text-primary-foreground"
-                    : "bg-secondary text-foreground"
+                    : values.status === "outOfStock"
+                      ? "bg-secondary text-foreground"
+                      : "border border-border bg-background text-muted-foreground"
                 }`}
               >
-                {values.status === "inStock" ? "In Stock" : "Out of Stock"}
+                {getProductStatusLabel(values.status)}
               </span>
               {values.featured ? (
                 <span className="rounded-full bg-accent px-3 py-1 font-body text-[11px] uppercase tracking-[0.18em] text-accent-foreground">

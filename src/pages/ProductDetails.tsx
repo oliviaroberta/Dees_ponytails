@@ -13,32 +13,35 @@ import { useSales } from "@/context/SalesContext";
 import { apiRequest } from "@/lib/api";
 import { getProductImage } from "@/lib/productImages";
 import { parseProductOptions } from "@/lib/productOptions";
-import type { CatalogProduct } from "@/types/product";
+import { getProductStatusLabel, isPurchasableStatus, type CatalogProduct } from "@/types/product";
 import type { StoreReview } from "@/types/review";
 import ProductImageBadges from "@/components/ProductImageBadges";
 
 const ProductDetails = () => {
   const { id = "" } = useParams();
   const navigate = useNavigate();
-  const { products } = useAdminProducts();
+  const { storefrontProducts } = useAdminProducts();
   const { addItem, setIsOpen } = useCart();
   const { formatPrice, currency } = useCurrency();
   const { getSalePrice } = useSales();
 
-  const product = useMemo(() => products.find((item) => item.id === id) ?? null, [id, products]);
+  const product = useMemo(
+    () => storefrontProducts.find((item) => item.id === id) ?? null,
+    [id, storefrontProducts],
+  );
   const relatedProducts = useMemo(() => {
     if (!product) return [];
 
-    const sameTexture = products.filter(
+    const sameTexture = storefrontProducts.filter(
       (item) => item.id !== product.id && item.textureStyle === product.textureStyle,
     );
-    const sameCategory = products.filter(
+    const sameCategory = storefrontProducts.filter(
       (item) =>
         item.id !== product.id &&
         item.category === product.category &&
         item.textureStyle !== product.textureStyle,
     );
-    const remaining = products.filter(
+    const remaining = storefrontProducts.filter(
       (item) =>
         item.id !== product.id &&
         item.textureStyle !== product.textureStyle &&
@@ -46,7 +49,7 @@ const ProductDetails = () => {
     );
 
     return [...sameTexture, ...sameCategory, ...remaining].slice(0, 3);
-  }, [product, products]);
+  }, [product, storefrontProducts]);
 
   const lengthOptions = useMemo(() => {
     if (!product) return [];
@@ -137,8 +140,13 @@ const ProductDetails = () => {
   const resolvedImage = getProductImage(product.name, product.image);
   const salePrice = getSalePrice(product.id, product.price);
   const effectivePrice = salePrice ?? product.price;
+  const isPurchasable = isPurchasableStatus(product.status);
 
   const addCurrentItem = () => {
+    if (!isPurchasable) {
+      return;
+    }
+
     addItem({
       id: product.id,
       name: product.name,
@@ -151,6 +159,10 @@ const ProductDetails = () => {
   };
 
   const handleBuyNow = () => {
+    if (!isPurchasable) {
+      return;
+    }
+
     addCurrentItem();
     setIsOpen(false);
     navigate("/checkout");
@@ -237,7 +249,7 @@ const ProductDetails = () => {
                       : "bg-secondary text-foreground"
                   }`}
                 >
-                  {product.status === "inStock" ? "In Stock" : "Out of Stock"}
+                  {getProductStatusLabel(product.status)}
                 </span>
                 <span className="rounded-full border border-border px-3 py-1.5 font-body text-xs text-muted-foreground">
                   {product.category}
@@ -285,17 +297,27 @@ const ProductDetails = () => {
                 </p>
               </div>
 
+              {!isPurchasable ? (
+                <div className="mb-6 rounded-2xl border border-border/60 bg-background/60 p-4">
+                  <p className="font-body text-sm text-muted-foreground">
+                    This product is currently unavailable for checkout. You can still browse the details.
+                  </p>
+                </div>
+              ) : null}
+
               <div className="flex flex-col gap-3 sm:flex-row">
                 <button
                   onClick={addCurrentItem}
-                  className="flex flex-1 items-center justify-center gap-2 rounded border border-foreground px-5 py-3 font-body text-sm tracking-wide text-foreground transition-colors hover:bg-foreground hover:text-background"
+                  disabled={!isPurchasable}
+                  className="flex flex-1 items-center justify-center gap-2 rounded border border-foreground px-5 py-3 font-body text-sm tracking-wide text-foreground transition-colors hover:bg-foreground hover:text-background disabled:cursor-not-allowed disabled:border-border disabled:text-muted-foreground disabled:hover:bg-transparent"
                 >
                   <ShoppingBag size={16} />
                   Add to Cart
                 </button>
                 <button
                   onClick={handleBuyNow}
-                  className="flex flex-1 items-center justify-center gap-2 rounded bg-accent px-5 py-3 font-body text-sm tracking-wide text-accent-foreground transition-opacity hover:opacity-90"
+                  disabled={!isPurchasable}
+                  className="flex flex-1 items-center justify-center gap-2 rounded bg-accent px-5 py-3 font-body text-sm tracking-wide text-accent-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <CreditCard size={16} />
                   Buy Now

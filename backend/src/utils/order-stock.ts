@@ -43,7 +43,12 @@ const updateProductStock = async (
   await product.update(
     {
       stock: nextStock,
-      status: nextStock > 0 ? "IN_STOCK" : "OUT_OF_STOCK",
+      status:
+        product.status === "ARCHIVED" || product.status === "DRAFT"
+          ? product.status
+          : nextStock > 0
+            ? "IN_STOCK"
+            : "OUT_OF_STOCK",
     },
     { transaction },
   );

@@ -2,7 +2,7 @@ import { Eye } from "lucide-react";
 import { motion } from "framer-motion";
 import { useCurrency } from "@/context/CurrencyContext";
 import { useSales } from "@/context/SalesContext";
-import type { CatalogProduct } from "@/types/product";
+import { getProductStatusLabel, type CatalogProduct } from "@/types/product";
 import { getProductImage } from "@/lib/productImages";
 import { Link } from "react-router-dom";
 import ProductImageBadges from "./ProductImageBadges";
@@ -50,7 +50,7 @@ const ProductCard = ({ product, highlighted = false }: Props) => {
         <ProductImageBadges isOnSale={!!salePrice} isBestseller={product.featured} />
       </Link>
 
-      <div className="rounded-[1.25rem] bg-background/60 p-4">
+        <div className="rounded-[1.25rem] bg-background/60 p-4">
         <div className="mb-3 flex items-start justify-between gap-3">
           <div>
             <p className="mb-1 font-body text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
@@ -72,6 +72,11 @@ const ProductCard = ({ product, highlighted = false }: Props) => {
 
         <div className="flex items-end justify-between gap-4">
           <div>
+            {product.status === "outOfStock" ? (
+              <p className="mb-1 font-body text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                {getProductStatusLabel(product.status)}
+              </p>
+            ) : null}
             {salePrice ? (
               <p className="font-body text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
                 Original Price

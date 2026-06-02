@@ -105,7 +105,7 @@ export class Product extends Model<InferAttributes<Product>, InferCreationAttrib
   declare price: number;
   declare description: string;
   declare featured: CreationOptional<boolean>;
-  declare status: CreationOptional<"IN_STOCK" | "OUT_OF_STOCK">;
+  declare status: CreationOptional<"IN_STOCK" | "OUT_OF_STOCK" | "ARCHIVED" | "DRAFT">;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
 }
@@ -169,7 +169,7 @@ Product.init(
       defaultValue: false,
     },
     status: {
-      type: DataTypes.ENUM("IN_STOCK", "OUT_OF_STOCK"),
+      type: DataTypes.ENUM("IN_STOCK", "OUT_OF_STOCK", "ARCHIVED", "DRAFT"),
       allowNull: false,
       defaultValue: "IN_STOCK",
     },

@@ -9,7 +9,7 @@ import PaginationControls from "./PaginationControls";
 const PRODUCTS_PER_PAGE = 9;
 
 const ShopSection = () => {
-  const { products } = useAdminProducts();
+  const { storefrontProducts } = useAdminProducts();
   const [searchParams] = useSearchParams();
   const [activeCollection, setActiveCollection] = useState("all");
   const [highlightedProductId, setHighlightedProductId] = useState<string | null>(null);
@@ -19,7 +19,7 @@ const ShopSection = () => {
   const categories = useMemo(() => {
     const uniqueCategories = Array.from(
       new Set(
-        products
+        storefrontProducts
           .map((product) => product.category.trim())
           .filter(Boolean),
       ),
@@ -37,17 +37,17 @@ const ShopSection = () => {
         description: `${category} styles available in the shop.`,
       })),
     ];
-  }, [products]);
+  }, [storefrontProducts]);
 
   const filteredProducts = useMemo(() => {
     if (activeCollection === "all") {
-      return products;
+      return storefrontProducts;
     }
 
-    return products.filter(
+    return storefrontProducts.filter(
       (product) => normalizeCategoryKey(product.category) === activeCollection,
     );
-  }, [activeCollection, products]);
+  }, [activeCollection, storefrontProducts]);
 
   const activeMeta =
     categories.find((collection) => collection.key === activeCollection) ?? categories[0];
@@ -74,7 +74,7 @@ const ShopSection = () => {
   useEffect(() => {
     if (!targetProductId) return;
 
-    const targetProduct = products.find((product) => product.id === targetProductId);
+    const targetProduct = storefrontProducts.find((product) => product.id === targetProductId);
     if (!targetProduct) return;
 
     const targetCollection = normalizeCategoryKey(targetProduct.category) || "all";
@@ -90,7 +90,7 @@ const ShopSection = () => {
     }, 120);
 
     return () => window.clearTimeout(timer);
-  }, [activeCollection, products, targetProductId]);
+  }, [activeCollection, storefrontProducts, targetProductId]);
 
   useEffect(() => {
     if (!highlightedProductId) return;
@@ -127,8 +127,8 @@ const ShopSection = () => {
             {categories.map((collection) => {
               const count =
                 collection.key === "all"
-                  ? products.length
-                  : products.filter(
+                  ? storefrontProducts.length
+                  : storefrontProducts.filter(
                       (product) => normalizeCategoryKey(product.category) === collection.key,
                     ).length;
 

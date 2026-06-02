@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const productStatusSchema = z.enum(["IN_STOCK", "OUT_OF_STOCK"]);
+const productStatusSchema = z.enum(["IN_STOCK", "OUT_OF_STOCK", "ARCHIVED", "DRAFT"]);
 
 export const productBodySchema = z.object({
   slug: z
@@ -32,6 +32,7 @@ export const productListQuerySchema = z.object({
   search: z.string().trim().optional(),
   category: z.string().trim().optional(),
   status: productStatusSchema.optional(),
+  visibility: z.enum(["public", "all"]).optional().default("public"),
   featured: z
     .enum(["true", "false"])
     .optional()
