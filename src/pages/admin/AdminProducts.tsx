@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Archive, EyeOff, Pencil, PlusCircle, Search, Trash2 } from "lucide-react";
+import { Pencil, PlusCircle, Search, Trash2 } from "lucide-react";
 import AdminShell from "@/components/admin/AdminShell";
 import { useAdminProducts } from "@/context/AdminProductsContext";
 import {
@@ -297,49 +297,11 @@ const AdminProducts = () => {
                         <div className="flex flex-wrap gap-3">
                           <Link
                             to={`/admin/products/${product.id}/edit`}
-                            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 font-body text-xs uppercase tracking-[0.18em] text-foreground transition-colors hover:bg-card"
+                            className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1 font-body text-[11px] uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
                           >
-                            <Pencil size={13} />
+                            <Pencil size={12} />
                             Edit
                           </Link>
-                          <button
-                            type="button"
-                            disabled={isBusy || product.status === "archived"}
-                            onClick={() =>
-                              setPendingAction({
-                                productId: product.id,
-                                productName: product.name,
-                                kind: "status",
-                                nextStatus: "archived",
-                                title: "Archive Product",
-                                description: `${product.name} will be removed from the storefront but preserved for reporting and order history.`,
-                                confirmLabel: "Archive Product",
-                              })
-                            }
-                            className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 font-body text-xs uppercase tracking-[0.18em] text-foreground transition-colors hover:bg-background disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            <Archive size={13} />
-                            Archive
-                          </button>
-                          <button
-                            type="button"
-                            disabled={isBusy || product.status === "draft"}
-                            onClick={() =>
-                              setPendingAction({
-                                productId: product.id,
-                                productName: product.name,
-                                kind: "status",
-                                nextStatus: "draft",
-                                title: "Hide Product From Store",
-                                description: `${product.name} will be moved to Draft and hidden from the storefront until you publish it again.`,
-                                confirmLabel: "Hide From Store",
-                              })
-                            }
-                            className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2 font-body text-xs uppercase tracking-[0.18em] text-foreground transition-colors hover:bg-background disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            <EyeOff size={13} />
-                            Hide
-                          </button>
                           <button
                             type="button"
                             disabled={isBusy}
@@ -353,9 +315,9 @@ const AdminProducts = () => {
                                 confirmLabel: "Delete Product",
                               })
                             }
-                            className="inline-flex items-center gap-2 rounded-full border border-destructive/40 px-4 py-2 font-body text-xs uppercase tracking-[0.18em] text-destructive transition-colors hover:bg-destructive/10 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="inline-flex items-center gap-1.5 rounded-full border border-destructive/40 px-3 py-1 font-body text-[11px] uppercase tracking-[0.18em] text-destructive transition-colors hover:bg-destructive/10 disabled:cursor-not-allowed disabled:opacity-50"
                           >
-                            <Trash2 size={13} />
+                            <Trash2 size={12} />
                             {isBusy ? "Working..." : "Delete"}
                           </button>
                         </div>
