@@ -58,7 +58,6 @@ Optional / deployment-specific:
 - `CLOUDINARY_API_KEY`
 - `CLOUDINARY_API_SECRET`
 - `CLOUDINARY_UPLOAD_FOLDER`
-- `CLOUDINARY_UNSIGNED_UPLOAD_PRESET`
 
 ## Main Endpoints
 
@@ -118,6 +117,8 @@ Optional / deployment-specific:
 - `POST /api/uploads/product-image`
 - `POST /api/uploads/product-video`
 
+Product images continue to upload through the backend. Product videos for the admin product form now use the Cloudinary Upload Widget or a pasted Cloudinary URL instead of posting large files through Vercel serverless.
+
 ## Database Scripts
 
 Local:
@@ -148,6 +149,5 @@ The seed script creates:
 - admin-protected routes require `Authorization: Bearer <access_token>`
 - payment verification is backend-driven
 - uploaded images/videos use Cloudinary when configured
-- direct browser video uploads on Vercel use `CLOUDINARY_UNSIGNED_UPLOAD_PRESET`
 - local filesystem uploads are only a development fallback
 - for Vercel deployment, the Express app is exported through the repo-root `api/` function entrypoints and stays mounted under `/api`

@@ -2,6 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import type { AdminProductInput } from "@/context/AdminProductsContext";
 import { useAdminProducts } from "@/context/AdminProductsContext";
 import {
+  isCloudinaryVideoWidgetConfigured,
+  isValidCloudinaryVideoUrl,
+  openCloudinaryVideoWidget,
+} from "@/lib/cloudinary-widget";
+import {
   getProductStatusLabel,
   isStorefrontVisibleStatus,
   type ProductStatus,
@@ -34,15 +39,14 @@ const ProductForm = ({
   onSubmit: (
     values: AdminProductInput,
     imageFile: File | null,
-    videoFile: File | null,
   ) => void | Promise<void>;
 }) => {
   const { products } = useAdminProducts();
   const [values, setValues] = useState<ProductFormValues>(initialValues);
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [videoFile, setVideoFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>("");
-  const [videoPreviewUrl, setVideoPreviewUrl] = useState<string>("");
+  const [videoError, setVideoError] = useState<string | null>(null);
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const categoryOptions = useMemo(
     () =>
       Array.from(
@@ -80,26 +84,20 @@ const ProductForm = ({
     };
   }, [imageFile]);
 
-  useEffect(() => {
-    if (!videoFile) {
-      setVideoPreviewUrl("");
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmedVideo = values.video.trim();
+
+    if (trimmedVideo && !isValidCloudinaryVideoUrl(trimmedVideo)) {
+      setVideoError("Enter a valid Cloudinary video URL or upload through the widget.");
       return;
     }
 
-    const objectUrl = URL.createObjectURL(videoFile);
-    setVideoPreviewUrl(objectUrl);
-
-    return () => {
-      URL.revokeObjectURL(objectUrl);
-    };
-  }, [videoFile]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+    setVideoError(null);
     void onSubmit({
       name: values.name.trim(),
       image: values.image.trim(),
-      video: values.video.trim() || null,
+      video: trimmedVideo || null,
       category: values.category.trim(),
       textureStyle: values.textureStyle.trim(),
       length: values.length.trim(),
@@ -109,17 +107,14 @@ const ProductForm = ({
       description: values.description.trim(),
       featured: values.featured,
       status: values.status,
-    }, imageFile, videoFile);
+    }, imageFile);
   };
 
   const previewImage = useMemo(
     () => previewUrl || values.image.trim(),
     [previewUrl, values.image],
   );
-  const previewVideo = useMemo(
-    () => videoPreviewUrl || values.video.trim(),
-    [videoPreviewUrl, values.video],
-  );
+  const previewVideo = useMemo(() => values.video.trim(), [values.video]);
 
   return (
     <form onSubmit={handleSubmit} className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
@@ -159,21 +154,79 @@ const ProductForm = ({
             </div>
             <div className="md:col-span-2">
               <label className="mb-1.5 block font-body text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                Product Video
+                Product Video (Optional)
               </label>
-              <input
-                type="file"
-                accept="video/*"
-                onChange={(event) => {
-                  const nextFile = event.target.files?.[0] ?? null;
-                  setVideoFile(nextFile);
-                }}
-                className="w-full rounded-2xl border border-border bg-background px-4 py-3 font-body text-sm text-foreground outline-none transition-colors file:mr-4 file:rounded-full file:border-0 file:bg-primary file:px-4 file:py-2 file:font-body file:text-xs file:uppercase file:tracking-[0.18em] file:text-primary-foreground focus:border-foreground"
-              />
-              <p className="mt-1.5 font-body text-xs text-muted-foreground">
-                Optional. Upload a short product video for the product details page.
-                {values.video ? " Leave blank to keep the current video." : ""}
-              </p>
+              <div className="space-y-3 rounded-2xl border border-border/60 bg-background/60 p-4">
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setVideoError(null);
+                      setIsUploadingVideo(true);
+                      try {
+                        const nextUrl = await openCloudinaryVideoWidget();
+                        update("video", nextUrl);
+                      } catch (error) {
+                        if (error instanceof Error && error.message === "Video upload was cancelled") {
+                          setVideoError(null);
+                          return;
+                        }
+                        setVideoError(
+                          error instanceof Error ? error.message : "Video upload failed",
+                        );
+                      } finally {
+                        setIsUploadingVideo(false);
+                      }
+                    }}
+                    disabled={!isCloudinaryVideoWidgetConfigured() || isUploadingVideo}
+                    className="rounded-full border border-border bg-card px-4 py-2 font-body text-xs uppercase tracking-[0.18em] text-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {isUploadingVideo ? "Uploading Video..." : "Upload Product Video"}
+                  </button>
+                  {values.video ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        update("video", "");
+                        setVideoError(null);
+                      }}
+                      className="rounded-full border border-destructive/30 bg-destructive/10 px-4 py-2 font-body text-xs uppercase tracking-[0.18em] text-destructive transition-opacity hover:opacity-80"
+                    >
+                      Remove Video
+                    </button>
+                  ) : null}
+                </div>
+                <p className="font-body text-xs text-muted-foreground">
+                  {isCloudinaryVideoWidgetConfigured()
+                    ? "Upload a product video directly to Cloudinary with the widget."
+                    : "Cloudinary video widget is not configured. Use the manual Cloudinary URL field below instead."}
+                </p>
+                <div>
+                  <label className="mb-1.5 block font-body text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                    Paste Video URL Instead
+                  </label>
+                  <input
+                    type="url"
+                    value={values.video}
+                    placeholder="https://res.cloudinary.com/..."
+                    onChange={(event) => {
+                      update("video", event.target.value);
+                      setVideoError(
+                        event.target.value.trim() && !isValidCloudinaryVideoUrl(event.target.value)
+                          ? "Enter a valid Cloudinary video URL."
+                          : null,
+                      );
+                    }}
+                    className="w-full rounded-2xl border border-border bg-background px-4 py-3 font-body text-sm text-foreground outline-none transition-colors focus:border-foreground"
+                  />
+                  <p className="mt-1.5 font-body text-xs text-muted-foreground">
+                    Paste a Cloudinary video URL if you prefer not to use the upload widget.
+                  </p>
+                </div>
+                {videoError ? (
+                  <p className="font-body text-xs text-destructive">{videoError}</p>
+                ) : null}
+              </div>
             </div>
           </div>
           {categoryOptions.length > 0 ? (
@@ -341,9 +394,9 @@ const ProductForm = ({
                 Selected file: {imageFile.name}
               </p>
             ) : null}
-            {videoFile ? (
+            {values.video ? (
               <p className="font-body text-xs text-muted-foreground">
-                Selected video: {videoFile.name}
+                Video URL ready to save.
               </p>
             ) : null}
           </div>

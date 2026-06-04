@@ -5,10 +5,7 @@ import { createRateLimit } from "../../middleware/rate-limit.js";
 import { asyncHandler } from "../../utils/async-handler.js";
 import { AppError } from "../../utils/app-error.js";
 import {
-  createCloudinaryUploadSignature,
-  createCloudinaryUnsignedUploadConfig,
   isCloudinaryConfigured,
-  isCloudinaryUnsignedUploadConfigured,
   uploadImageToCloudinary,
   uploadVideoToCloudinary,
 } from "../../utils/cloudinary.js";
@@ -63,44 +60,6 @@ const videoUpload = multer({
     callback(null, true);
   },
 });
-
-uploadsRouter.post(
-  "/sign",
-  requireAdmin,
-  adminUploadRateLimit,
-  asyncHandler(async (req, res) => {
-    const fileName =
-      typeof req.body?.fileName === "string" ? req.body.fileName.trim() : "";
-    const resourceType =
-      req.body?.resourceType === "video" ? "video" : req.body?.resourceType === "image" ? "image" : null;
-
-    if (!fileName) {
-      throw new AppError("File name is required", 400);
-    }
-
-    if (!resourceType) {
-      throw new AppError("Resource type must be image or video", 400);
-    }
-
-    if (!isCloudinaryConfigured()) {
-      throw new AppError("Cloudinary is not configured", 503);
-    }
-
-    const builtFileName = buildUploadFileName(fileName);
-    const upload =
-      resourceType === "video" && isCloudinaryUnsignedUploadConfigured()
-        ? createCloudinaryUnsignedUploadConfig({
-            fileName: builtFileName,
-            resourceType,
-          })
-        : createCloudinaryUploadSignature({
-            fileName: builtFileName,
-            resourceType,
-          });
-
-    res.status(201).json(upload);
-  }),
-);
 
 uploadsRouter.post(
   "/product-image",

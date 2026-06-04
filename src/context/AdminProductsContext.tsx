@@ -18,7 +18,6 @@ interface AdminProductsContextType {
   isLoading: boolean;
   error: string | null;
   uploadProductImage: (file: File) => Promise<string>;
-  uploadProductVideo: (file: File) => Promise<string>;
   addProduct: (product: CatalogProductInput) => Promise<void>;
   updateProduct: (id: string, updates: CatalogProductInput) => Promise<void>;
   setProductStatus: (id: string, status: ProductStatus) => Promise<void>;
@@ -247,22 +246,6 @@ export const AdminProductsProvider = ({ children }: { children: React.ReactNode 
         });
 
         return response.imageUrl;
-      },
-      uploadProductVideo: async (file) => {
-        if (!accessToken) {
-          throw new Error("Admin authentication is required");
-        }
-
-        const formData = new FormData();
-        formData.append("video", file);
-
-        const response = await apiRequest<{ videoUrl: string }>("/uploads/product-video", {
-          method: "POST",
-          token: accessToken,
-          body: formData,
-        });
-
-        return response.videoUrl;
       },
       addProduct: async (product) => {
         if (!accessToken) {
