@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import AdminShell from "@/components/admin/AdminShell";
-import { apiRequest, uploadCloudinaryMedia } from "@/lib/api";
+import { apiRequest } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import type { GalleryItem } from "@/types/gallery";
 import PaginationControls from "@/components/PaginationControls";
@@ -70,23 +70,19 @@ const AdminGallery = () => {
     }
 
     const isVideo = selectedFile.type.startsWith("video/");
-    const mediaUrl = isVideo
-      ? await uploadCloudinaryMedia({
-          file: selectedFile,
-          resourceType: "video",
-          token: accessToken,
-        })
-      : (
-          await apiRequest<{ imageUrl: string }>("/uploads/product-image", {
-            method: "POST",
-            token: accessToken,
-            body: (() => {
-              const formData = new FormData();
-              formData.append("image", selectedFile);
-              return formData;
-            })(),
-          })
-        ).imageUrl;
+    const formData = new FormData();
+    formData.append(isVideo ? "video" : "image", selectedFile);
+
+    const response = await apiRequest<{ imageUrl?: string; videoUrl?: string }>(
+      isVideo ? "/uploads/product-video" : "/uploads/product-image",
+      {
+        method: "POST",
+        token: accessToken,
+        body: formData,
+      },
+    );
+
+    const mediaUrl = response.videoUrl || response.imageUrl || "";
 
     return {
       mediaType: isVideo ? ("VIDEO" as const) : ("IMAGE" as const),

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { API_BASE_URL, apiRequest, uploadCloudinaryMedia } from "@/lib/api";
+import { API_BASE_URL, apiRequest } from "@/lib/api";
 import { slugify } from "@/lib/strings";
 import {
   PUBLIC_PRODUCT_STATUSES,
@@ -253,11 +253,16 @@ export const AdminProductsProvider = ({ children }: { children: React.ReactNode 
           throw new Error("Admin authentication is required");
         }
 
-        return uploadCloudinaryMedia({
-          file,
-          resourceType: "video",
+        const formData = new FormData();
+        formData.append("video", file);
+
+        const response = await apiRequest<{ videoUrl: string }>("/uploads/product-video", {
+          method: "POST",
           token: accessToken,
+          body: formData,
         });
+
+        return response.videoUrl;
       },
       addProduct: async (product) => {
         if (!accessToken) {

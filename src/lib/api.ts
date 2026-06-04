@@ -47,28 +47,6 @@ type RequestOptions = RequestInit & {
   token?: string | null;
 };
 
-type CloudinarySignedUpload = {
-  mode?: "signed";
-  apiKey: string;
-  cloudName: string;
-  folder: string;
-  publicId: string;
-  resourceType: "image" | "video";
-  signature: string;
-  timestamp: number;
-  uploadUrl: string;
-};
-
-type CloudinaryUnsignedUpload = {
-  mode: "unsigned";
-  cloudName: string;
-  folder: string;
-  publicId: string;
-  resourceType: "image" | "video";
-  uploadPreset: string;
-  uploadUrl: string;
-};
-
 export const apiRequest = async <T>(path: string, options: RequestOptions = {}): Promise<T> => {
   const { token, headers, body, ...rest } = options;
   const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
@@ -124,57 +102,4 @@ export const apiRequest = async <T>(path: string, options: RequestOptions = {}):
   }
 
   return (await response.json()) as T;
-};
-
-export const uploadCloudinaryMedia = async ({
-  file,
-  resourceType,
-  token,
-}: {
-  file: File;
-  resourceType: "image" | "video";
-  token?: string | null;
-}) => {
-  const uploadConfig = await apiRequest<CloudinarySignedUpload | CloudinaryUnsignedUpload>(
-    "/uploads/sign",
-    {
-      method: "POST",
-      token,
-      body: JSON.stringify({
-        fileName: file.name,
-        resourceType,
-      }),
-    },
-  );
-
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("folder", uploadConfig.folder);
-  formData.append("public_id", uploadConfig.publicId);
-
-  if (uploadConfig.mode === "unsigned") {
-    formData.append("upload_preset", uploadConfig.uploadPreset);
-  } else {
-    formData.append("api_key", uploadConfig.apiKey);
-    formData.append("timestamp", uploadConfig.timestamp.toString());
-    formData.append("signature", uploadConfig.signature);
-  }
-
-  const response = await fetch(uploadConfig.uploadUrl, {
-    method: "POST",
-    body: formData,
-  });
-
-  const payload = (await response.json().catch(() => null)) as
-    | { secure_url?: string; error?: { message?: string } }
-    | null;
-
-  if (!response.ok || !payload?.secure_url) {
-    throw new ApiError(
-      payload?.error?.message || `${resourceType === "video" ? "Video" : "Image"} upload failed`,
-      response.status,
-    );
-  }
-
-  return payload.secure_url;
 };
