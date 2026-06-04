@@ -48,6 +48,7 @@ type RequestOptions = RequestInit & {
 };
 
 type CloudinarySignedUpload = {
+  mode?: "signed";
   apiKey: string;
   cloudName: string;
   folder: string;
@@ -55,6 +56,16 @@ type CloudinarySignedUpload = {
   resourceType: "image" | "video";
   signature: string;
   timestamp: number;
+  uploadUrl: string;
+};
+
+type CloudinaryUnsignedUpload = {
+  mode: "unsigned";
+  cloudName: string;
+  folder: string;
+  publicId: string;
+  resourceType: "image" | "video";
+  uploadPreset: string;
   uploadUrl: string;
 };
 
@@ -124,24 +135,32 @@ export const uploadCloudinaryMedia = async ({
   resourceType: "image" | "video";
   token?: string | null;
 }) => {
-  const signedUpload = await apiRequest<CloudinarySignedUpload>("/uploads/sign", {
-    method: "POST",
-    token,
-    body: JSON.stringify({
-      fileName: file.name,
-      resourceType,
-    }),
-  });
+  const uploadConfig = await apiRequest<CloudinarySignedUpload | CloudinaryUnsignedUpload>(
+    "/uploads/sign",
+    {
+      method: "POST",
+      token,
+      body: JSON.stringify({
+        fileName: file.name,
+        resourceType,
+      }),
+    },
+  );
 
   const formData = new FormData();
   formData.append("file", file);
-  formData.append("api_key", signedUpload.apiKey);
-  formData.append("timestamp", signedUpload.timestamp.toString());
-  formData.append("folder", signedUpload.folder);
-  formData.append("public_id", signedUpload.publicId);
-  formData.append("signature", signedUpload.signature);
+  formData.append("folder", uploadConfig.folder);
+  formData.append("public_id", uploadConfig.publicId);
 
-  const response = await fetch(signedUpload.uploadUrl, {
+  if (uploadConfig.mode === "unsigned") {
+    formData.append("upload_preset", uploadConfig.uploadPreset);
+  } else {
+    formData.append("api_key", uploadConfig.apiKey);
+    formData.append("timestamp", uploadConfig.timestamp.toString());
+    formData.append("signature", uploadConfig.signature);
+  }
+
+  const response = await fetch(uploadConfig.uploadUrl, {
     method: "POST",
     body: formData,
   });

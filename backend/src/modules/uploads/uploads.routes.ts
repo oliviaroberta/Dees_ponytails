@@ -6,7 +6,9 @@ import { asyncHandler } from "../../utils/async-handler.js";
 import { AppError } from "../../utils/app-error.js";
 import {
   createCloudinaryUploadSignature,
+  createCloudinaryUnsignedUploadConfig,
   isCloudinaryConfigured,
+  isCloudinaryUnsignedUploadConfigured,
   uploadImageToCloudinary,
   uploadVideoToCloudinary,
 } from "../../utils/cloudinary.js";
@@ -84,10 +86,17 @@ uploadsRouter.post(
       throw new AppError("Cloudinary is not configured", 503);
     }
 
-    const upload = createCloudinaryUploadSignature({
-      fileName: buildUploadFileName(fileName),
-      resourceType,
-    });
+    const builtFileName = buildUploadFileName(fileName);
+    const upload =
+      resourceType === "video" && isCloudinaryUnsignedUploadConfigured()
+        ? createCloudinaryUnsignedUploadConfig({
+            fileName: builtFileName,
+            resourceType,
+          })
+        : createCloudinaryUploadSignature({
+            fileName: builtFileName,
+            resourceType,
+          });
 
     res.status(201).json(upload);
   }),

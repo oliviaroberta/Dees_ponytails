@@ -14,6 +14,12 @@ export const isCloudinaryConfigured = () =>
   env.CLOUDINARY_API_KEY !== "your_cloudinary_api_key" &&
   env.CLOUDINARY_API_SECRET !== "your_cloudinary_api_secret";
 
+export const isCloudinaryUnsignedUploadConfigured = () =>
+  !!env.CLOUDINARY_UNSIGNED_UPLOAD_PRESET &&
+  env.CLOUDINARY_UNSIGNED_UPLOAD_PRESET !== "your_unsigned_upload_preset" &&
+  !!env.CLOUDINARY_CLOUD_NAME &&
+  env.CLOUDINARY_CLOUD_NAME !== "your_cloud_name";
+
 const buildSignedUploadPayload = ({
   fileName,
   resourceType,
@@ -97,3 +103,30 @@ export const createCloudinaryUploadSignature = (payload: {
   fileName: string;
   resourceType: CloudinaryResourceType;
 }) => buildSignedUploadPayload(payload);
+
+export const createCloudinaryUnsignedUploadConfig = ({
+  fileName,
+  resourceType,
+}: {
+  fileName: string;
+  resourceType: CloudinaryResourceType;
+}) => {
+  if (!isCloudinaryUnsignedUploadConfigured()) {
+    throw new AppError(
+      "Direct video uploads require CLOUDINARY_UNSIGNED_UPLOAD_PRESET to be configured",
+      503,
+    );
+  }
+
+  const publicId = fileName.replace(/\.[a-z0-9]+$/i, "");
+
+  return {
+    cloudName: env.CLOUDINARY_CLOUD_NAME!,
+    folder: CLOUDINARY_FOLDER,
+    mode: "unsigned" as const,
+    publicId,
+    resourceType,
+    uploadPreset: env.CLOUDINARY_UNSIGNED_UPLOAD_PRESET!,
+    uploadUrl: `https://api.cloudinary.com/v1_1/${env.CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`,
+  };
+};

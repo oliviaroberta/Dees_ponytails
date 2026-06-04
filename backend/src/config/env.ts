@@ -17,6 +17,7 @@ const envSchema = z.object({
   CLOUDINARY_API_KEY: z.string().min(1).optional(),
   CLOUDINARY_API_SECRET: z.string().min(1).optional(),
   CLOUDINARY_UPLOAD_FOLDER: z.string().min(1).optional(),
+  CLOUDINARY_UNSIGNED_UPLOAD_PRESET: z.string().min(1).optional(),
   PGSSL: z
     .union([z.literal("true"), z.literal("false")])
     .optional()

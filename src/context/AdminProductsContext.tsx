@@ -237,11 +237,16 @@ export const AdminProductsProvider = ({ children }: { children: React.ReactNode 
           throw new Error("Admin authentication is required");
         }
 
-        return uploadCloudinaryMedia({
-          file,
-          resourceType: "image",
+        const formData = new FormData();
+        formData.append("image", file);
+
+        const response = await apiRequest<{ imageUrl: string }>("/uploads/product-image", {
+          method: "POST",
           token: accessToken,
+          body: formData,
         });
+
+        return response.imageUrl;
       },
       uploadProductVideo: async (file) => {
         if (!accessToken) {

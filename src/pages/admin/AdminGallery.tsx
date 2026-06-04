@@ -70,11 +70,23 @@ const AdminGallery = () => {
     }
 
     const isVideo = selectedFile.type.startsWith("video/");
-    const mediaUrl = await uploadCloudinaryMedia({
-      file: selectedFile,
-      resourceType: isVideo ? "video" : "image",
-      token: accessToken,
-    });
+    const mediaUrl = isVideo
+      ? await uploadCloudinaryMedia({
+          file: selectedFile,
+          resourceType: "video",
+          token: accessToken,
+        })
+      : (
+          await apiRequest<{ imageUrl: string }>("/uploads/product-image", {
+            method: "POST",
+            token: accessToken,
+            body: (() => {
+              const formData = new FormData();
+              formData.append("image", selectedFile);
+              return formData;
+            })(),
+          })
+        ).imageUrl;
 
     return {
       mediaType: isVideo ? ("VIDEO" as const) : ("IMAGE" as const),
