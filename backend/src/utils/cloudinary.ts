@@ -4,6 +4,8 @@ import { AppError } from "./app-error.js";
 
 const CLOUDINARY_FOLDER = env.CLOUDINARY_UPLOAD_FOLDER || "dees-ponytails/products";
 
+type CloudinaryResourceType = "image" | "video";
+
 export const isCloudinaryConfigured = () =>
   !!env.CLOUDINARY_CLOUD_NAME &&
   !!env.CLOUDINARY_API_KEY &&
@@ -11,6 +13,34 @@ export const isCloudinaryConfigured = () =>
   env.CLOUDINARY_CLOUD_NAME !== "your_cloud_name" &&
   env.CLOUDINARY_API_KEY !== "your_cloudinary_api_key" &&
   env.CLOUDINARY_API_SECRET !== "your_cloudinary_api_secret";
+
+const buildSignedUploadPayload = ({
+  fileName,
+  resourceType,
+}: {
+  fileName: string;
+  resourceType: CloudinaryResourceType;
+}) => {
+  if (!isCloudinaryConfigured()) {
+    throw new AppError("Cloudinary is not configured", 503);
+  }
+
+  const timestamp = Math.floor(Date.now() / 1000);
+  const publicId = fileName.replace(/\.[a-z0-9]+$/i, "");
+  const signatureBase = `folder=${CLOUDINARY_FOLDER}&public_id=${publicId}&timestamp=${timestamp}${env.CLOUDINARY_API_SECRET}`;
+  const signature = crypto.createHash("sha1").update(signatureBase).digest("hex");
+
+  return {
+    apiKey: env.CLOUDINARY_API_KEY!,
+    cloudName: env.CLOUDINARY_CLOUD_NAME!,
+    folder: CLOUDINARY_FOLDER,
+    publicId,
+    resourceType,
+    signature,
+    timestamp,
+    uploadUrl: `https://api.cloudinary.com/v1_1/${env.CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`,
+  };
+};
 
 const uploadToCloudinary = async ({
   buffer,
@@ -21,33 +51,23 @@ const uploadToCloudinary = async ({
   buffer: Buffer;
   mimeType: string;
   fileName: string;
-  resourceType: "image" | "video";
+  resourceType: CloudinaryResourceType;
 }) => {
-  if (!isCloudinaryConfigured()) {
-    throw new AppError("Cloudinary is not configured", 503);
-  }
-
-  const timestamp = Math.floor(Date.now() / 1000);
-  const publicId = fileName.replace(/\.[a-z0-9]+$/i, "");
-  const signatureBase = `folder=${CLOUDINARY_FOLDER}&public_id=${publicId}&timestamp=${timestamp}${env.CLOUDINARY_API_SECRET}`;
-  const signature = crypto.createHash("sha1").update(signatureBase).digest("hex");
+  const signedPayload = buildSignedUploadPayload({ fileName, resourceType });
   const dataUri = `data:${mimeType};base64,${buffer.toString("base64")}`;
   const formData = new FormData();
 
   formData.append("file", dataUri);
-  formData.append("api_key", env.CLOUDINARY_API_KEY!);
-  formData.append("timestamp", timestamp.toString());
-  formData.append("folder", CLOUDINARY_FOLDER);
-  formData.append("public_id", publicId);
-  formData.append("signature", signature);
+  formData.append("api_key", signedPayload.apiKey);
+  formData.append("timestamp", signedPayload.timestamp.toString());
+  formData.append("folder", signedPayload.folder);
+  formData.append("public_id", signedPayload.publicId);
+  formData.append("signature", signedPayload.signature);
 
-  const response = await fetch(
-    `https://api.cloudinary.com/v1_1/${env.CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`,
-    {
-      method: "POST",
-      body: formData,
-    },
-  );
+  const response = await fetch(signedPayload.uploadUrl, {
+    method: "POST",
+    body: formData,
+  });
 
   const payload = (await response.json()) as {
     secure_url?: string;
@@ -72,3 +92,8 @@ export const uploadVideoToCloudinary = (payload: {
   mimeType: string;
   fileName: string;
 }) => uploadToCloudinary({ ...payload, resourceType: "video" });
+
+export const createCloudinaryUploadSignature = (payload: {
+  fileName: string;
+  resourceType: CloudinaryResourceType;
+}) => buildSignedUploadPayload(payload);

@@ -47,6 +47,17 @@ type RequestOptions = RequestInit & {
   token?: string | null;
 };
 
+type CloudinarySignedUpload = {
+  apiKey: string;
+  cloudName: string;
+  folder: string;
+  publicId: string;
+  resourceType: "image" | "video";
+  signature: string;
+  timestamp: number;
+  uploadUrl: string;
+};
+
 export const apiRequest = async <T>(path: string, options: RequestOptions = {}): Promise<T> => {
   const { token, headers, body, ...rest } = options;
   const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
@@ -102,4 +113,49 @@ export const apiRequest = async <T>(path: string, options: RequestOptions = {}):
   }
 
   return (await response.json()) as T;
+};
+
+export const uploadCloudinaryMedia = async ({
+  file,
+  resourceType,
+  token,
+}: {
+  file: File;
+  resourceType: "image" | "video";
+  token?: string | null;
+}) => {
+  const signedUpload = await apiRequest<CloudinarySignedUpload>("/uploads/sign", {
+    method: "POST",
+    token,
+    body: JSON.stringify({
+      fileName: file.name,
+      resourceType,
+    }),
+  });
+
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("api_key", signedUpload.apiKey);
+  formData.append("timestamp", signedUpload.timestamp.toString());
+  formData.append("folder", signedUpload.folder);
+  formData.append("public_id", signedUpload.publicId);
+  formData.append("signature", signedUpload.signature);
+
+  const response = await fetch(signedUpload.uploadUrl, {
+    method: "POST",
+    body: formData,
+  });
+
+  const payload = (await response.json().catch(() => null)) as
+    | { secure_url?: string; error?: { message?: string } }
+    | null;
+
+  if (!response.ok || !payload?.secure_url) {
+    throw new ApiError(
+      payload?.error?.message || `${resourceType === "video" ? "Video" : "Image"} upload failed`,
+      response.status,
+    );
+  }
+
+  return payload.secure_url;
 };
