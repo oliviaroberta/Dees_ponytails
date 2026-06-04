@@ -6,13 +6,7 @@
     "api/gallery/[...path].ts": {
       "maxDuration": 60
     },
-    "api/orders/index.ts": {
-      "maxDuration": 60
-    },
-    "api/orders/[id].ts": {
-      "maxDuration": 60
-    },
-    "api/orders/[id]/status.ts": {
+    "api/orders/[...path].ts": {
       "maxDuration": 60
     },
     "api/payments/verify/[reference].ts": {
