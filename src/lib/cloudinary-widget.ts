@@ -5,6 +5,7 @@ let widgetScriptPromise: Promise<void> | null = null;
 const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME?.trim() || "";
 const uploadPreset =
   import.meta.env.VITE_CLOUDINARY_UNSIGNED_UPLOAD_PRESET?.trim() ||
+  import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET?.trim() ||
   import.meta.env.VITE_CLOUDINARY_VIDEO_UPLOAD_PRESET?.trim() ||
   "";
 const folder = import.meta.env.VITE_CLOUDINARY_UPLOAD_FOLDER?.trim() || "";
@@ -45,6 +46,7 @@ declare global {
   interface ImportMetaEnv {
     readonly VITE_CLOUDINARY_CLOUD_NAME?: string;
     readonly VITE_CLOUDINARY_UNSIGNED_UPLOAD_PRESET?: string;
+    readonly VITE_CLOUDINARY_UPLOAD_PRESET?: string;
     readonly VITE_CLOUDINARY_VIDEO_UPLOAD_PRESET?: string;
     readonly VITE_CLOUDINARY_UPLOAD_FOLDER?: string;
   }

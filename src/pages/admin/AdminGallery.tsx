@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import AdminShell from "@/components/admin/AdminShell";
 import { apiRequest } from "@/lib/api";
+import {
+  getCloudinaryVideoWidgetSetupMessage,
+  isCloudinaryVideoWidgetConfigured,
+  openCloudinaryVideoWidget,
+} from "@/lib/cloudinary-widget";
 import { useAuth } from "@/context/AuthContext";
 import type { GalleryItem } from "@/types/gallery";
 import PaginationControls from "@/components/PaginationControls";
@@ -14,6 +19,8 @@ const AdminGallery = () => {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [file, setFile] = useState<File | null>(null);
+  const [videoUrl, setVideoUrl] = useState("");
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [form, setForm] = useState({
     customerName: "",
@@ -49,6 +56,7 @@ const AdminGallery = () => {
   );
 
   const previewUrl = useMemo(() => (file ? URL.createObjectURL(file) : ""), [file]);
+  const videoWidgetSetupMessage = getCloudinaryVideoWidgetSetupMessage();
 
   useEffect(() => {
     return () => {
@@ -64,17 +72,16 @@ const AdminGallery = () => {
     }
   }, [currentPage, totalPages]);
 
-  const uploadMedia = async (selectedFile: File) => {
+  const uploadImage = async (selectedFile: File) => {
     if (!accessToken) {
       throw new Error("Admin authentication is required");
     }
 
-    const isVideo = selectedFile.type.startsWith("video/");
     const formData = new FormData();
-    formData.append(isVideo ? "video" : "image", selectedFile);
+    formData.append("image", selectedFile);
 
     const response = await apiRequest<{ imageUrl?: string; videoUrl?: string }>(
-      isVideo ? "/uploads/product-video" : "/uploads/product-image",
+      "/uploads/product-image",
       {
         method: "POST",
         token: accessToken,
@@ -82,11 +89,9 @@ const AdminGallery = () => {
       },
     );
 
-    const mediaUrl = response.videoUrl || response.imageUrl || "";
-
     return {
-      mediaType: isVideo ? ("VIDEO" as const) : ("IMAGE" as const),
-      mediaUrl,
+      mediaType: "IMAGE" as const,
+      mediaUrl: response.imageUrl || "",
     };
   };
 
@@ -116,11 +121,16 @@ const AdminGallery = () => {
               setIsSubmitting(true);
 
               try {
-                if (!file) {
-                  throw new Error("Please choose a photo or video first");
+                if (!file && !videoUrl) {
+                  throw new Error("Please choose a photo or upload a video first");
                 }
 
-                const uploaded = await uploadMedia(file);
+                const uploaded = file
+                  ? await uploadImage(file)
+                  : {
+                      mediaType: "VIDEO" as const,
+                      mediaUrl: videoUrl,
+                    };
                 const response = await apiRequest<{ item: GalleryItem }>("/gallery", {
                   method: "POST",
                   token: accessToken,
@@ -136,6 +146,7 @@ const AdminGallery = () => {
 
                 setItems((current) => [response.item, ...current]);
                 setFile(null);
+                setVideoUrl("");
                 setForm({
                   customerName: "",
                   caption: "",
@@ -153,14 +164,80 @@ const AdminGallery = () => {
           >
             <div>
               <label className="mb-1.5 block font-body text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                Photo or Video
+                Gallery Photo
               </label>
               <input
                 type="file"
-                accept="image/*,video/*"
-                onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+                accept="image/*"
+                onChange={(event) => {
+                  setFile(event.target.files?.[0] ?? null);
+                  if (event.target.files?.[0]) {
+                    setVideoUrl("");
+                  }
+                }}
                 className="w-full rounded-2xl border border-border bg-background px-4 py-3 font-body text-sm text-foreground outline-none transition-colors file:mr-4 file:rounded-full file:border-0 file:bg-primary file:px-4 file:py-2 file:text-xs file:uppercase file:tracking-[0.18em] file:text-primary-foreground focus:border-foreground"
               />
+            </div>
+
+            <div className="rounded-2xl border border-border/60 bg-background/60 p-4">
+              <label className="mb-1.5 block font-body text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                Gallery Video
+              </label>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setError(null);
+                    if (!isCloudinaryVideoWidgetConfigured()) {
+                      setError(
+                        videoWidgetSetupMessage ||
+                          "Video upload setup is incomplete. Add the Cloudinary widget environment variables and try again.",
+                      );
+                      return;
+                    }
+
+                    setIsUploadingVideo(true);
+                    try {
+                      const nextVideoUrl = await openCloudinaryVideoWidget();
+                      setVideoUrl(nextVideoUrl);
+                      setFile(null);
+                    } catch (uploadError) {
+                      if (
+                        uploadError instanceof Error &&
+                        uploadError.message === "Video upload was cancelled"
+                      ) {
+                        return;
+                      }
+
+                      setError(
+                        uploadError instanceof Error
+                          ? uploadError.message
+                          : "Failed to upload gallery video",
+                      );
+                    } finally {
+                      setIsUploadingVideo(false);
+                    }
+                  }}
+                  disabled={isUploadingVideo}
+                  className="rounded-full border border-border bg-card px-4 py-2 font-body text-xs uppercase tracking-[0.18em] text-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isUploadingVideo ? "Uploading Video..." : "Upload Gallery Video"}
+                </button>
+                {videoUrl ? (
+                  <button
+                    type="button"
+                    onClick={() => setVideoUrl("")}
+                    className="rounded-full border border-destructive/30 bg-destructive/10 px-4 py-2 font-body text-xs uppercase tracking-[0.18em] text-destructive transition-opacity hover:opacity-80"
+                  >
+                    Remove Video
+                  </button>
+                ) : null}
+              </div>
+              <p className="mt-2 font-body text-xs text-muted-foreground">
+                {isCloudinaryVideoWidgetConfigured()
+                  ? "Upload gallery videos directly to Cloudinary without sending them through Vercel."
+                  : videoWidgetSetupMessage}
+              </p>
             </div>
 
             <Field
@@ -201,16 +278,14 @@ const AdminGallery = () => {
             </button>
           </form>
 
-          <div className="mt-5 overflow-hidden rounded-[1.5rem] border border-border/60 bg-background/70">
-            {previewUrl ? (
-              file?.type.startsWith("video/") ? (
-                <video src={previewUrl} controls className="aspect-video w-full object-cover" />
-              ) : (
+            <div className="mt-5 overflow-hidden rounded-[1.5rem] border border-border/60 bg-background/70">
+            {videoUrl ? (
+              <video src={videoUrl} controls className="aspect-video w-full object-cover" />
+            ) : previewUrl ? (
                 <img src={previewUrl} alt="Gallery preview" className="aspect-[4/5] w-full object-cover" />
-              )
             ) : (
               <div className="flex aspect-[4/5] items-center justify-center px-6 text-center font-body text-sm text-muted-foreground">
-                Select a photo or video to preview it before publishing.
+                Select a photo or upload a video to preview it before publishing.
               </div>
             )}
           </div>
