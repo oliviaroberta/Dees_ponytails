@@ -165,6 +165,13 @@ const ProductForm = ({
                     type="button"
                     onClick={async () => {
                       setVideoError(null);
+                      if (!isCloudinaryVideoWidgetConfigured()) {
+                        setVideoError(
+                          videoWidgetSetupMessage ||
+                            "Video upload setup is incomplete. Add the Cloudinary widget environment variables and try again.",
+                        );
+                        return;
+                      }
                       setIsUploadingVideo(true);
                       try {
                         const nextUrl = await openCloudinaryVideoWidget();
@@ -181,7 +188,7 @@ const ProductForm = ({
                         setIsUploadingVideo(false);
                       }
                     }}
-                    disabled={!isCloudinaryVideoWidgetConfigured() || isUploadingVideo}
+                    disabled={isUploadingVideo}
                     className="rounded-full border border-border bg-card px-4 py-2 font-body text-xs uppercase tracking-[0.18em] text-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {isUploadingVideo ? "Uploading Video..." : "Upload Product Video"}
