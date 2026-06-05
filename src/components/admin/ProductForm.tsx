@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { AdminProductInput } from "@/context/AdminProductsContext";
 import { useAdminProducts } from "@/context/AdminProductsContext";
 import {
+  getCloudinaryVideoWidgetSetupMessage,
   isCloudinaryVideoWidgetConfigured,
   isValidCloudinaryVideoUrl,
   openCloudinaryVideoWidget,
@@ -47,6 +48,7 @@ const ProductForm = ({
   const [previewUrl, setPreviewUrl] = useState<string>("");
   const [videoError, setVideoError] = useState<string | null>(null);
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+  const [showManualVideoUrl, setShowManualVideoUrl] = useState(false);
   const categoryOptions = useMemo(
     () =>
       Array.from(
@@ -65,6 +67,7 @@ const ProductForm = ({
   );
   const featuredLimitReached = featuredProductCount >= 3;
   const canBeFeatured = isStorefrontVisibleStatus(values.status);
+  const videoWidgetSetupMessage = getCloudinaryVideoWidgetSetupMessage();
 
   const update = <K extends keyof ProductFormValues>(key: K, value: ProductFormValues[K]) => {
     setValues((current) => ({ ...current, [key]: value }));
@@ -195,34 +198,45 @@ const ProductForm = ({
                       Remove Video
                     </button>
                   ) : null}
+                  <button
+                    type="button"
+                    onClick={() => setShowManualVideoUrl((current) => !current)}
+                    className="rounded-full border border-border bg-background px-4 py-2 font-body text-xs uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    {showManualVideoUrl
+                      ? "Hide Manual URL"
+                      : "Advanced: Paste Video URL Manually"}
+                  </button>
                 </div>
                 <p className="font-body text-xs text-muted-foreground">
                   {isCloudinaryVideoWidgetConfigured()
-                    ? "Upload a product video directly to Cloudinary with the widget."
-                    : "Cloudinary video widget is not configured. Use the manual Cloudinary URL field below instead."}
+                    ? "Click Upload Product Video, choose a video, and we will save the Cloudinary video link automatically."
+                    : videoWidgetSetupMessage}
                 </p>
-                <div>
-                  <label className="mb-1.5 block font-body text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                    Paste Video URL Instead
-                  </label>
-                  <input
-                    type="url"
-                    value={values.video}
-                    placeholder="https://res.cloudinary.com/..."
-                    onChange={(event) => {
-                      update("video", event.target.value);
-                      setVideoError(
-                        event.target.value.trim() && !isValidCloudinaryVideoUrl(event.target.value)
-                          ? "Enter a valid Cloudinary video URL."
-                          : null,
-                      );
-                    }}
-                    className="w-full rounded-2xl border border-border bg-background px-4 py-3 font-body text-sm text-foreground outline-none transition-colors focus:border-foreground"
-                  />
-                  <p className="mt-1.5 font-body text-xs text-muted-foreground">
-                    Paste a Cloudinary video URL if you prefer not to use the upload widget.
-                  </p>
-                </div>
+                {showManualVideoUrl ? (
+                  <div>
+                    <label className="mb-1.5 block font-body text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                      Paste Video URL Instead
+                    </label>
+                    <input
+                      type="url"
+                      value={values.video}
+                      placeholder="https://res.cloudinary.com/..."
+                      onChange={(event) => {
+                        update("video", event.target.value);
+                        setVideoError(
+                          event.target.value.trim() && !isValidCloudinaryVideoUrl(event.target.value)
+                            ? "Enter a valid Cloudinary video URL."
+                            : null,
+                        );
+                      }}
+                      className="w-full rounded-2xl border border-border bg-background px-4 py-3 font-body text-sm text-foreground outline-none transition-colors focus:border-foreground"
+                    />
+                    <p className="mt-1.5 font-body text-xs text-muted-foreground">
+                      Use this only if you already have a Cloudinary video URL and need a manual backup.
+                    </p>
+                  </div>
+                ) : null}
                 {videoError ? (
                   <p className="font-body text-xs text-destructive">{videoError}</p>
                 ) : null}

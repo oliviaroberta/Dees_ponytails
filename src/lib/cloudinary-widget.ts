@@ -3,7 +3,10 @@ const CLOUDINARY_WIDGET_SCRIPT_SRC = "https://upload-widget.cloudinary.com/globa
 let widgetScriptPromise: Promise<void> | null = null;
 
 const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME?.trim() || "";
-const uploadPreset = import.meta.env.VITE_CLOUDINARY_VIDEO_UPLOAD_PRESET?.trim() || "";
+const uploadPreset =
+  import.meta.env.VITE_CLOUDINARY_UNSIGNED_UPLOAD_PRESET?.trim() ||
+  import.meta.env.VITE_CLOUDINARY_VIDEO_UPLOAD_PRESET?.trim() ||
+  "";
 const folder = import.meta.env.VITE_CLOUDINARY_UPLOAD_FOLDER?.trim() || "";
 
 type CloudinaryUploadResult = {
@@ -41,12 +44,21 @@ declare global {
 
   interface ImportMetaEnv {
     readonly VITE_CLOUDINARY_CLOUD_NAME?: string;
+    readonly VITE_CLOUDINARY_UNSIGNED_UPLOAD_PRESET?: string;
     readonly VITE_CLOUDINARY_VIDEO_UPLOAD_PRESET?: string;
     readonly VITE_CLOUDINARY_UPLOAD_FOLDER?: string;
   }
 }
 
 export const isCloudinaryVideoWidgetConfigured = () => !!cloudName && !!uploadPreset;
+
+export const getCloudinaryVideoWidgetSetupMessage = () => {
+  if (isCloudinaryVideoWidgetConfigured()) {
+    return null;
+  }
+
+  return "Video upload needs a quick setup before it can open. Add your Cloudinary cloud name and unsigned upload preset in the frontend environment settings.";
+};
 
 export const isValidCloudinaryVideoUrl = (value: string) => {
   const trimmed = value.trim();
@@ -104,7 +116,10 @@ const loadCloudinaryWidgetScript = () => {
 
 export const openCloudinaryVideoWidget = async () => {
   if (!isCloudinaryVideoWidgetConfigured()) {
-    throw new Error("Cloudinary video widget is not configured");
+    throw new Error(
+      getCloudinaryVideoWidgetSetupMessage() ||
+        "Cloudinary video widget is not configured",
+    );
   }
 
   await loadCloudinaryWidgetScript();
